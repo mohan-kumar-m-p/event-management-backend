@@ -19,9 +19,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         database: configService.get<string>('POSTGRES_DB'),
         autoLoadEntities: true,
         synchronize: true, // Set to false in production
-        logging: true,
+        // logging: true,
         ssl: {
-          rejectUnauthorized: false, // Accept self-signed certificates (adjust as needed)
+          rejectUnauthorized: false,
         },
       }),
     }),
