@@ -1,15 +1,33 @@
-console.log('Starting NestJS application...');
-
+import { Controller, Get, Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 
-async function bootstrap() {
-  console.log('Bootstrap function entered.');
-  const app = await NestFactory.create(AppModule);
-  console.log('NestFactory created.');
-  const port = process.env.PORT || 3000;
-  await app.listen(port);
-  console.log(`Application is running on: ${await app.getUrl()}`);
+// Simple controller with one route
+@Controller()
+class AppController {
+  @Get()
+  getRoot() {
+    return 'Hello, Vercel!';
+  }
 }
 
-bootstrap().catch(err => console.error('Error during bootstrap:', err));
+// Simple module with the single controller
+@Module({
+  controllers: [AppController],
+})
+class AppModule {}
+
+// Main bootstrap function
+async function bootstrap() {
+  console.log('Starting minimal NestJS application...');
+
+  const app = await NestFactory.create(AppModule);
+  const port = process.env.PORT || 3000;
+
+  await app.listen(port);
+
+  console.log(`Application is running on: http://localhost:${port}`);
+}
+
+bootstrap().catch((err) => {
+  console.error('Error during application startup:', err);
+});
