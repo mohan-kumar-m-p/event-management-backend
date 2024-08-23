@@ -11,7 +11,7 @@ import { Event } from 'src/event/event.entity';
 import { AthleteDto } from './athlete.dto';
 import { Athlete } from './athlete.entity';
 import { EventGroup } from 'src/event/enums/event-group.enum';
-import { calculateAge } from 'src/shared/utils/date-utils';
+// import { calculateAge } from 'src/shared/utils/date-utils';
 import { EventType } from 'src/event/enums/event-type.enum';
 
 @Injectable()
@@ -77,18 +77,18 @@ export class AthleteService {
     if (!athlete) {
       throw new NotFoundException('Athlete not found');
     }
-    const athleteAge = calculateAge(athlete.dob);
+    // const athleteAge = calculateAge(athlete.dob);
 
-    let athleteGroup;
-    if (athleteAge > 19) {
-      throw new BadRequestException('Athlete is not eligible');
-    } else if (athleteAge < 14) {
-      athleteGroup = EventGroup.Under14;
-    } else if (athleteAge < 17) {
-      athleteGroup = EventGroup.Under17;
-    } else if (athleteAge < 19) {
-      athleteGroup = EventGroup.Under19;
-    }
+    const athleteGroup = EventGroup.Under19;
+    // if (athleteAge > 19) {
+    //   throw new BadRequestException('Athlete is not eligible');
+    // } else if (athleteAge < 14) {
+    //   athleteGroup = EventGroup.Under14;
+    // } else if (athleteAge < 17) {
+    //   athleteGroup = EventGroup.Under17;
+    // } else if (athleteAge < 19) {
+    //   athleteGroup = EventGroup.Under19;
+    // }
 
     const events = await this.eventRepository.find({
       where: { group: athleteGroup, gender: athlete.gender },
