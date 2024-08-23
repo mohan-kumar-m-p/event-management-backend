@@ -15,9 +15,12 @@ async function createNestServer() {
   return expressApp;
 }
 
-let cachedServer;
+let cachedServer: express.Express;
 
-export default async function handler(req, res) {
+export default async function handler(
+  req: express.Request,
+  res: express.Response,
+) {
   if (!cachedServer) {
     cachedServer = await createNestServer();
   }
