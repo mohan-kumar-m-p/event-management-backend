@@ -10,9 +10,9 @@ import { School } from '../school/school.entity';
 import { Event } from 'src/event/event.entity';
 import { AthleteDto } from './athlete.dto';
 import { Athlete } from './athlete.entity';
-import { EventGroup } from '../../src/event/enums/event-group.enum';
-import { calculateAge } from '../../src/shared/utils/date-utils';
-import { EventType } from '../../src/event/enums/event-type.enum';
+import { EventGroup } from 'src/event/enums/event-group.enum';
+import { calculateAge } from 'src/shared/utils/date-utils';
+import { EventType } from 'src/event/enums/event-type.enum';
 
 @Injectable()
 export class AthleteService {
