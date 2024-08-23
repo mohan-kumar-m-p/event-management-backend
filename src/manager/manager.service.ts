@@ -34,12 +34,20 @@ export class ManagerService {
       school: school,
     });
 
-    // Generate QR code
-    const qrCodeData = `${backendUrl}/verify-meal?managerId=${manager.managerId}`;
-    const qrCode = await QRCode.toDataURL(qrCodeData);
-    manager.qrCode = qrCode;
+    // Save the manager entity without the QR code first
+    const savedManager = await this.managerRepository.save(manager);
 
-    return this.managerRepository.save(manager);
+    // Generate the QR code using the saved manager's registration ID
+    const qrCodeData = `${backendUrl}/verify-meal?registrationId=${savedManager.managerId}`;
+    const qrCode = await QRCode.toDataURL(qrCodeData);
+
+    // Update the saved manager with the QR code
+    savedManager.qrCode = qrCode;
+
+    // Save the manager entity again with the updated QR code
+    await this.managerRepository.save(savedManager);
+
+    return savedManager;
   }
 
   async findAll(): Promise<Manager[]> {

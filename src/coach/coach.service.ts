@@ -16,6 +16,7 @@ export class CoachService {
   ) {}
 
   async createCoach(coachDto: CoachDto): Promise<Coach> {
+    const backendUrl = process.env.BACKEND_URL;
     // Find the school by affiliationNumber
     const school = await this.schoolRepository.findOne({
       where: { affiliationNumber: coachDto.affiliationNumber },
@@ -32,12 +33,20 @@ export class CoachService {
       school: school,
     });
 
-    // Generate QR code
-    const qrCodeData = `https://your-domain.com/verify-meal?coachId=${coach.coachId}`;
-    const qrCode = await QRCode.toDataURL(qrCodeData);
-    coach.qrCode = qrCode;
+    // Save the coach entity without the QR code first
+    const savedCoach = await this.coachRepository.save(coach);
 
-    return this.coachRepository.save(coach);
+    // Generate the QR code using the saved coach's registration ID
+    const qrCodeData = `${backendUrl}/verify-meal?registrationId=${savedCoach.coachId}`;
+    const qrCode = await QRCode.toDataURL(qrCodeData);
+
+    // Update the saved coach with the QR code
+    savedCoach.qrCode = qrCode;
+
+    // Save the coach entity again with the updated QR code
+    await this.coachRepository.save(savedCoach);
+
+    return savedCoach;
   }
 
   async findAll(): Promise<Coach[]> {
