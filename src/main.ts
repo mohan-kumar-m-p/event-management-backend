@@ -1,10 +1,25 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { ExpressAdapter } from '@nestjs/platform-express';
+import * as express from 'express';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  const port = process.env.PORT || 3000;
-  await app.listen(port);
-  console.log(`Application is running on: ${await app.getUrl()}`);
+const expressApp = express();
+
+async function createNestServer() {
+  const app = await NestFactory.create(
+    AppModule,
+    new ExpressAdapter(expressApp),
+  );
+  app.enableCors(); // Enable CORS if needed
+  await app.init();
+  return expressApp;
 }
-bootstrap();
+
+let cachedServer;
+
+export default async function handler(req, res) {
+  if (!cachedServer) {
+    cachedServer = await createNestServer();
+  }
+  return cachedServer(req, res);
+}
