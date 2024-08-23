@@ -9,6 +9,7 @@ import { AccommodationModule } from './accommodation/accommodation.module';
 import { BlockModule } from './block/block.module';
 import { EventModule } from './event/event.module';
 import { SchoolModule } from './school/school.module';
+import { MealModule } from './meal/meal.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { SchoolModule } from './school/school.module';
     AccommodationModule,
     BlockModule,
     EventModule,
+    MealModule,
   ],
   controllers: [WildcardController],
 })
