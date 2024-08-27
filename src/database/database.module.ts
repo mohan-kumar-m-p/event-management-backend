@@ -20,9 +20,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         autoLoadEntities: true,
         synchronize: false, // Set to false in production
         // logging: true,
-        ssl: {
-          rejectUnauthorized: false,
-        },
+        // ssl: {
+        //   rejectUnauthorized: false,
+        // },
       }),
     }),
   ],
