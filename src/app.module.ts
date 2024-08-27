@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { DatabaseModule } from './database/database.module';
+// import { DatabaseModule } from './database/database.module';
 import { WildcardController } from './wildcard.controller';
 import { AthleteModule } from './athlete/athlete.module';
 import { ManagerModule } from './manager/manager.module';
@@ -16,7 +16,7 @@ import { MealModule } from './meal/meal.module';
     ConfigModule.forRoot({
       isGlobal: true, // Makes ConfigModule available throughout the app
     }),
-    DatabaseModule,
+    // DatabaseModule,
     AthleteModule,
     ManagerModule,
     CoachModule,
