@@ -17,12 +17,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         username: configService.get<string>('POSTGRES_USER'),
         password: configService.get<string>('POSTGRES_PASSWORD'),
         database: configService.get<string>('POSTGRES_DB'),
-        autoLoadEntities: true,
+        // autoLoadEntities: true,
         synchronize: false, // Set to false in production
         // logging: true,
         // ssl: {
         //   rejectUnauthorized: false,
         // },
+        ssl: true,
+        sslMode: 'require',
       }),
     }),
   ],
