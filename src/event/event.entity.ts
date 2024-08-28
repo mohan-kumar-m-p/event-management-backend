@@ -1,7 +1,8 @@
 import { Athlete } from 'src/athlete/athlete.entity';
 import { Column, Entity, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { EventGroup } from './enums/event-group.enum';
+import { EventCategory } from './enums/event-category.enum';
 import { EventType } from './enums/event-type.enum';
+import { EventSportGroup } from './enums/event-sport-group.enum';
 
 @Entity()
 export class Event {
@@ -13,9 +14,15 @@ export class Event {
 
   @Column({
     type: 'enum',
-    enum: EventGroup,
+    enum: EventCategory,
   })
-  group: EventGroup;
+  category: EventCategory;
+
+  @Column({
+    type: 'enum',
+    enum: EventSportGroup,
+  })
+  sportGroup: EventSportGroup;
 
   @Column({
     type: 'enum',

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Event } from './event.entity';
@@ -11,10 +11,20 @@ export class EventService {
   ) {}
 
   async findAll(): Promise<Event[]> {
-    return this.eventRepository.find();
+    const events = await this.eventRepository.find();
+    if (!events) {
+      throw new NotFoundException('No events found');
+    }
+    return events;
   }
 
   async findOne(id: string): Promise<Event> {
-    return this.eventRepository.findOne({ where: { eventId: id } });
+    const event = await this.eventRepository.findOne({
+      where: { eventId: id },
+    });
+    if (!event) {
+      throw new NotFoundException(`Event with ID ${id} not found`);
+    }
+    return event;
   }
 }

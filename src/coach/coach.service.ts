@@ -1,10 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { School } from 'src/school/school.entity';
 import { Repository } from 'typeorm';
-import * as QRCode from 'qrcode';
 import { CoachDto } from './coach.dto';
 import { Coach } from './coach.entity';
-import { School } from 'src/school/school.entity';
 
 @Injectable()
 export class CoachService {
@@ -16,7 +19,6 @@ export class CoachService {
   ) {}
 
   async createCoach(coachDto: CoachDto): Promise<Coach> {
-    const backendUrl = process.env.BACKEND_URL;
     // Find the school by affiliationNumber
     const school = await this.schoolRepository.findOne({
       where: { affiliationNumber: coachDto.affiliationNumber },
@@ -34,34 +36,33 @@ export class CoachService {
     });
 
     // Save the coach entity without the QR code first
-    const savedCoach = await this.coachRepository.save(coach);
-
-    // Generate the QR code using the saved coach's registration ID
-    const qrCodeData = `${backendUrl}/verify-meal?registrationId=${savedCoach.coachId}`;
-    const qrCode = await QRCode.toDataURL(qrCodeData);
-
-    // Update the saved coach with the QR code
-    savedCoach.qrCode = qrCode;
-
-    // Save the coach entity again with the updated QR code
-    await this.coachRepository.save(savedCoach);
-
-    return savedCoach;
+    await this.coachRepository.save(coach);
+    return coach;
   }
 
   async findAll(): Promise<Coach[]> {
-    return this.coachRepository.find();
+    const coaches = await this.coachRepository.find();
+    if (!coaches) {
+      throw new NotFoundException('No coaches found');
+    }
+    return coaches;
   }
 
   async findOne(id: string): Promise<Coach> {
-    return this.coachRepository.findOne({ where: { coachId: id } });
+    const coach = await this.coachRepository.findOne({
+      where: { coachId: id },
+    });
+    if (!coach) {
+      throw new NotFoundException(`Coach with ID ${id} not found`);
+    }
+    return coach;
   }
 
   async updateCoach(id: string, coachDto: CoachDto): Promise<Coach> {
     // Fetch the existing coach from the database
     const existingCoach = await this.findOne(id);
     if (!existingCoach) {
-      throw new NotFoundException('Coach not found');
+      throw new NotFoundException(`Coach with ID ${id} not found`);
     }
 
     // Update fields from the DTO
@@ -85,10 +86,17 @@ export class CoachService {
       existingCoach.school = school;
     }
 
-    return this.coachRepository.save(existingCoach);
+    try {
+      return this.coachRepository.save(existingCoach);
+    } catch (error) {
+      throw new BadRequestException('Failed to update coach');
+    }
   }
 
   async deleteCoach(id: string): Promise<void> {
-    await this.coachRepository.delete(id);
+    const result = await this.coachRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Coach with ID ${id} not found`);
+    }
   }
 }

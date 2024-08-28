@@ -41,8 +41,8 @@ export class Manager {
   @Column({ type: 'text', nullable: true })
   photoUrl: string;
 
-  @Column({ type: 'text', nullable: true })
-  qrCode: string;
+  // @Column({ type: 'text', nullable: true })
+  // qrCode: string;
 
   @ManyToOne(() => Accommodation, (accommodation) => accommodation.managers)
   @JoinColumn({ name: 'accommodationId' })
