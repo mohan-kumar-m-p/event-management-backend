@@ -1,5 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import * as QRCode from 'qrcode';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { School } from 'src/school/school.entity';
 import { ManagerDto } from './manager.dto';
 import { Manager } from './manager.entity';
@@ -16,8 +19,6 @@ export class ManagerService {
   ) {}
 
   async createManager(managerDto: ManagerDto): Promise<Manager> {
-    const backendUrl = process.env.BACKEND_URL;
-
     // Find the school by affiliationNumber
     const school = await this.schoolRepository.findOne({
       where: { affiliationNumber: managerDto.affiliationNumber },
@@ -34,35 +35,33 @@ export class ManagerService {
       school: school,
     });
 
-    // Save the manager entity without the QR code first
-    const savedManager = await this.managerRepository.save(manager);
-
-    // Generate the QR code using the saved manager's registration ID
-    const qrCodeData = `${backendUrl}/verify-meal?registrationId=${savedManager.managerId}`;
-    const qrCode = await QRCode.toDataURL(qrCodeData);
-
-    // Update the saved manager with the QR code
-    savedManager.qrCode = qrCode;
-
-    // Save the manager entity again with the updated QR code
-    await this.managerRepository.save(savedManager);
-
-    return savedManager;
+    await this.managerRepository.save(manager);
+    return manager;
   }
 
   async findAll(): Promise<Manager[]> {
-    return this.managerRepository.find();
+    const managers = await this.managerRepository.find();
+    if (!managers) {
+      throw new NotFoundException('No managers found');
+    }
+    return managers;
   }
 
   async findOne(id: string): Promise<Manager> {
-    return this.managerRepository.findOne({ where: { managerId: id } });
+    const manager = await this.managerRepository.findOne({
+      where: { managerId: id },
+    });
+    if (!manager) {
+      throw new NotFoundException(`Manager with ID ${id} not found`);
+    }
+    return manager;
   }
 
   async updateManager(id: string, managerDto: ManagerDto): Promise<Manager> {
     // Fetch the existing manager from the database
     const existingManager = await this.findOne(id);
     if (!existingManager) {
-      throw new NotFoundException('Manager not found');
+      throw new NotFoundException(`Manager with ID ${id} not found`);
     }
 
     // Update fields from the DTO
@@ -86,10 +85,17 @@ export class ManagerService {
       existingManager.school = school;
     }
 
-    return this.managerRepository.save(existingManager);
+    try {
+      return this.managerRepository.save(existingManager);
+    } catch (error) {
+      throw new BadRequestException('Failed to update athlete');
+    }
   }
 
   async deleteManager(id: string): Promise<void> {
-    await this.managerRepository.delete(id);
+    const result = await this.managerRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Manager with ID ${id} not found`);
+    }
   }
 }

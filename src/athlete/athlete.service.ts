@@ -4,15 +4,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import * as QRCode from 'qrcode';
+import { EventCategory } from 'src/event/enums/event-category.enum';
+import { EventSportGroup } from 'src/event/enums/event-sport-group.enum';
+import { EventType } from 'src/event/enums/event-type.enum';
+import { Event } from 'src/event/event.entity';
+import { calculateAge } from 'src/shared/utils/date-utils';
 import { In, Repository } from 'typeorm';
 import { School } from '../school/school.entity';
-import { Event } from 'src/event/event.entity';
 import { AthleteDto } from './athlete.dto';
 import { Athlete } from './athlete.entity';
-import { EventGroup } from 'src/event/enums/event-group.enum';
-import { calculateAge } from 'src/shared/utils/date-utils';
-import { EventType } from 'src/event/enums/event-type.enum';
 
 @Injectable()
 export class AthleteService {
@@ -26,8 +26,6 @@ export class AthleteService {
   ) {}
 
   async createAthlete(athleteDto: AthleteDto): Promise<Athlete> {
-    const backendUrl = process.env.BACKEND_URL;
-
     const school = await this.schoolRepository.findOne({
       where: { affiliationNumber: athleteDto.affiliationNumber },
     });
@@ -47,35 +45,33 @@ export class AthleteService {
       school: school,
     });
 
-    // Save the athlete entity without the QR code first
-    const savedAthlete = await this.athleteRepository.save(athlete);
-
-    // Generate the QR code using the saved athlete's registration ID
-    const qrCodeData = `${backendUrl}/verify-meal?registrationId=${savedAthlete.registrationId}`;
-    const qrCode = await QRCode.toDataURL(qrCodeData);
-
-    // Update the saved athlete with the QR code
-    savedAthlete.qrCode = qrCode;
-
-    // Save the athlete entity again with the updated QR code
-    await this.athleteRepository.save(savedAthlete);
-
-    return savedAthlete;
+    await this.athleteRepository.save(athlete);
+    return athlete;
   }
 
   async findAll(): Promise<Athlete[]> {
-    return this.athleteRepository.find();
+    const athletes = await this.athleteRepository.find();
+    if (!athletes) {
+      throw new NotFoundException('No athletes found');
+    }
+    return athletes;
   }
 
   async findOne(id: string): Promise<Athlete> {
-    return this.athleteRepository.findOne({ where: { registrationId: id } });
+    const athlete = await this.athleteRepository.findOne({
+      where: { registrationId: id },
+    });
+    if (!athlete) {
+      throw new NotFoundException(`Athlete with ID ${id} not found`);
+    }
+    return athlete;
   }
 
   async findEligibleEvents(id: string): Promise<Event[]> {
     const athlete = await this.findOne(id);
 
     if (!athlete) {
-      throw new NotFoundException('Athlete not found');
+      throw new NotFoundException(`Athlete with ID ${id} not found`);
     }
     const athleteAge = calculateAge(athlete.dob);
 
@@ -83,24 +79,26 @@ export class AthleteService {
     if (athleteAge > 19) {
       throw new BadRequestException('Athlete is not eligible');
     } else if (athleteAge < 14) {
-      athleteGroup = EventGroup.Under14;
+      athleteGroup = EventCategory.Under14;
     } else if (athleteAge < 17) {
-      athleteGroup = EventGroup.Under17;
+      athleteGroup = EventCategory.Under17;
     } else if (athleteAge < 19) {
-      athleteGroup = EventGroup.Under19;
+      athleteGroup = EventCategory.Under19;
     }
 
     const events = await this.eventRepository.find({
-      where: { group: athleteGroup, gender: athlete.gender },
+      where: { category: athleteGroup, gender: athlete.gender },
     });
-
+    if (!events || events.length === 0) {
+      throw new NotFoundException('No events found');
+    }
     return events;
   }
 
   async updateAthlete(id: string, athleteDto: AthleteDto): Promise<Athlete> {
     const existingAthlete = await this.findOne(id);
     if (!existingAthlete) {
-      throw new NotFoundException('Athlete not found');
+      throw new NotFoundException(`Athlete with ID ${id} not found`);
     }
 
     if (
@@ -124,65 +122,178 @@ export class AthleteService {
       existingAthlete.school = school;
     }
 
-    return this.athleteRepository.save(existingAthlete);
+    try {
+      return await this.athleteRepository.save(existingAthlete);
+    } catch (error) {
+      throw new BadRequestException('Failed to update athlete');
+    }
   }
 
   async assignEvents(athleteId: string, eventIds: string[]): Promise<Athlete> {
     const athlete = await this.athleteRepository.findOne({
       where: { registrationId: athleteId },
-      relations: ['events'],
+      relations: ['events', 'school'],
     });
 
     if (!athlete) {
-      throw new NotFoundException('Athlete not found');
+      throw new NotFoundException(`Athlete with ID ${athleteId} not found`);
     }
 
     if (!eventIds || eventIds.length === 0) {
       throw new BadRequestException('No events provided');
     }
 
-    // Fetch the events by their IDs
-    const events = await this.eventRepository.findBy({
-      eventId: In(eventIds),
-    });
+    const events = await this.eventRepository.findByIds(eventIds);
 
     if (events.length !== eventIds.length) {
       throw new NotFoundException('One or more events not found');
     }
 
-    // Separate the current events by type
-    const currentIndividualEvents = athlete.events.filter(
-      (event) => event.type === EventType.Individual,
-    ).length;
-    const currentGroupEvents = athlete.events.filter(
-      (event) => event.type === EventType.Group,
-    ).length;
+    const athleteAge = calculateAge(athlete.dob);
 
-    // Separate the new events by type
-    const newIndividualEvents = events.filter(
-      (event) => event.type === EventType.Individual,
-    ).length;
-    const newGroupEvents = events.filter(
-      (event) => event.type === EventType.Group,
-    ).length;
+    // Fetch all athletes from the same school
+    const schoolAthletes = await this.athleteRepository.find({
+      where: {
+        school: { affiliationNumber: athlete.school.affiliationNumber },
+      },
+      relations: ['events'],
+    });
 
-    // Check if adding these events would exceed the maximum allowed number of events
-    if (currentIndividualEvents + newIndividualEvents > 2) {
-      throw new BadRequestException(
-        'Athlete cannot be registered for more than 2 individual events.',
+    const conflictingEvents = [];
+
+    // Separate current events by type and sport group
+    const currentEvents = {
+      athletics: {
+        individual: athlete.events.filter(
+          (e) =>
+            e.sportGroup === EventSportGroup.Athletics &&
+            e.type === EventType.Individual,
+        ).length,
+        group: athlete.events.filter(
+          (e) =>
+            e.sportGroup === EventSportGroup.Athletics &&
+            e.type === EventType.Group,
+        ).length,
+      },
+      swimming: {
+        individual: athlete.events.filter(
+          (e) =>
+            e.sportGroup === EventSportGroup.Swimming &&
+            e.type === EventType.Individual,
+        ).length,
+        relay: athlete.events.filter(
+          (e) =>
+            e.sportGroup === EventSportGroup.Swimming &&
+            e.type === EventType.Group,
+        ).length,
+      },
+    };
+
+    // Separate new events by type and sport group
+    const newEvents = {
+      athletics: {
+        individual: events.filter(
+          (e) =>
+            e.sportGroup === EventSportGroup.Athletics &&
+            e.type === EventType.Individual,
+        ).length,
+        group: events.filter(
+          (e) =>
+            e.sportGroup === EventSportGroup.Athletics &&
+            e.type === EventType.Group,
+        ).length,
+      },
+      swimming: {
+        individual: events.filter(
+          (e) =>
+            e.sportGroup === EventSportGroup.Swimming &&
+            e.type === EventType.Individual,
+        ).length,
+        relay: events.filter(
+          (e) =>
+            e.sportGroup === EventSportGroup.Swimming &&
+            e.type === EventType.Group,
+        ).length,
+      },
+    };
+
+    for (const event of events) {
+      // Check if the event is already assigned to another athlete from the same school
+      const isEventAssigned = schoolAthletes.some(
+        (schoolAthlete) =>
+          schoolAthlete.registrationId !== athlete.registrationId &&
+          schoolAthlete.events.some((e) => e.eventId === event.eventId),
+      );
+
+      if (isEventAssigned && event.type !== EventType.Group) {
+        conflictingEvents.push(
+          `${event.name} is already assigned to another athlete from the same school`,
+        );
+      }
+
+      if (event.type === EventType.Group) {
+        // For relay events, count how many athletes from the school are already registered
+        const relayAthleteCount = schoolAthletes.filter((schoolAthlete) =>
+          schoolAthlete.events.some((e) => e.eventId === event.eventId),
+        ).length;
+
+        if (relayAthleteCount >= 5) {
+          conflictingEvents.push(
+            `Maximum of 5 athletes from the same school can be registered for relay event ${event.name}`,
+          );
+        }
+      }
+    }
+
+    // Check athletics events
+    if (
+      currentEvents.athletics.individual + newEvents.athletics.individual >
+      2
+    ) {
+      conflictingEvents.push(
+        'Athlete cannot be registered for more than 2 individual athletics events.',
+      );
+    }
+    if (currentEvents.athletics.group + newEvents.athletics.group > 2) {
+      conflictingEvents.push(
+        'Athlete cannot be registered for more than 2 group athletics events.',
       );
     }
 
-    if (currentGroupEvents + newGroupEvents > 2) {
-      throw new BadRequestException(
-        'Athlete cannot be registered for more than 2 group events.',
+    // Check swimming events
+    let maxSwimmingEvents = 0;
+    if (athleteAge < 11) {
+      maxSwimmingEvents = 3;
+    } else if (athleteAge < 14) {
+      maxSwimmingEvents = 4;
+    } else {
+      maxSwimmingEvents = 5;
+    }
+
+    if (
+      currentEvents.swimming.individual + newEvents.swimming.individual >
+      maxSwimmingEvents
+    ) {
+      conflictingEvents.push(
+        `Swimmer cannot be registered for more than ${maxSwimmingEvents} individual swimming events in their age group.`,
       );
     }
 
-    // Add the new events to the athlete's existing events
+    if (conflictingEvents.length > 0) {
+      throw new BadRequestException({
+        message: 'Failed to assign events due to conflicts',
+        data: conflictingEvents,
+      });
+    }
+
+    // If no conflicts, add the new events to the athlete's existing events
     athlete.events.push(...events);
 
-    return this.athleteRepository.save(athlete);
+    try {
+      return this.athleteRepository.save(athlete);
+    } catch (error) {
+      throw new BadRequestException('Failed to assign events to athlete');
+    }
   }
 
   async unassignEvents(
@@ -195,7 +306,7 @@ export class AthleteService {
     });
 
     if (!athlete) {
-      throw new NotFoundException('Athlete not found');
+      throw new NotFoundException(`Athlete with ID ${athleteId} not found`);
     }
 
     // Fetch events to ensure all eventIds correspond to existing events
@@ -212,7 +323,11 @@ export class AthleteService {
       (event) => !eventIds.includes(event.eventId),
     );
 
-    return this.athleteRepository.save(athlete);
+    try {
+      return this.athleteRepository.save(athlete);
+    } catch (error) {
+      throw new BadRequestException('Failed to unassign events');
+    }
   }
 
   async findAssignedEvents(id: string): Promise<Event[]> {
@@ -222,7 +337,7 @@ export class AthleteService {
     });
 
     if (!athlete) {
-      throw new NotFoundException('Athlete not found');
+      throw new NotFoundException(`Athlete with ID ${id} not found`);
     }
 
     // Check if the athlete has no events assigned
@@ -230,10 +345,17 @@ export class AthleteService {
       throw new NotFoundException('No events assigned to this athlete');
     }
 
-    return athlete.events;
+    try {
+      return athlete.events;
+    } catch (error) {
+      throw new BadRequestException('Failed to unassign events');
+    }
   }
 
   async deleteAthlete(id: string): Promise<void> {
-    await this.athleteRepository.delete(id);
+    const result = await this.athleteRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Athlete with ID ${id} not found`);
+    }
   }
 }

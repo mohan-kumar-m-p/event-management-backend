@@ -62,8 +62,8 @@ export class Athlete {
   @Column({ type: 'text', nullable: true })
   photoUrl: string;
 
-  @Column({ type: 'text', nullable: true })
-  qrCode: string;
+  // @Column({ type: 'text', nullable: true })
+  // qrCode: string;
 
   @ManyToOne(() => Accommodation, (accommodation) => accommodation.athletes)
   @JoinColumn({ name: 'accommodationId' })

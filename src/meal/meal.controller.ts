@@ -1,4 +1,5 @@
-import { Controller, Post, NotFoundException, Query } from '@nestjs/common';
+import { Controller, NotFoundException, Post, Query } from '@nestjs/common';
+import { ApiResponse } from 'src/shared/dto/api-response.dto';
 import { MealService } from './meal.service';
 
 @Controller('verify-meal')
@@ -10,7 +11,7 @@ export class MealController {
     @Query('registrationId') registrationId?: string,
     @Query('managerId') managerId?: string,
     @Query('coachId') coachId?: string,
-  ): Promise<{ message: string }> {
+  ): Promise<ApiResponse<any>> {
     if (registrationId) {
       await this.mealService.verifyMeal(registrationId, 'athlete');
     } else if (managerId) {
@@ -21,6 +22,6 @@ export class MealController {
       throw new NotFoundException('Invalid request');
     }
 
-    return { message: 'Meal verified and counted' };
+    return ApiResponse.success('Meal verified and counted');
   }
 }
