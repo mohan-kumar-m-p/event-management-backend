@@ -1,18 +1,19 @@
 import {
-  Entity,
   Column,
-  PrimaryGeneratedColumn,
-  OneToMany,
-  ManyToOne,
+  Entity,
   JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Athlete } from 'src/athlete/athlete.entity';
-import { Manager } from 'src/manager/manager.entity';
-import { Coach } from 'src/coach/coach.entity';
-import { Block } from 'src/block/block.entity';
+import { Athlete } from '../athlete/athlete.entity';
+import { Block } from '../block/block.entity';
+import { Coach } from '../coach/coach.entity';
+import { Manager } from '../manager/manager.entity';
+import { BaseEntity } from '../shared/base.entity';
 
 @Entity()
-export class Accommodation {
+export class Accommodation extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   accommodationId: string;
 

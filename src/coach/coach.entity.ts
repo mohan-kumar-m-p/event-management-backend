@@ -7,9 +7,10 @@ import {
 } from 'typeorm';
 import { Accommodation } from '../accommodation/accommodation.entity';
 import { School } from '../school/school.entity';
+import { BaseEntity } from '../shared/base.entity';
 
 @Entity()
-export class Coach {
+export class Coach extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   coachId: string;
 
