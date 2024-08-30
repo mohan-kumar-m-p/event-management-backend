@@ -8,11 +8,12 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Accommodation } from '../accommodation/accommodation.entity';
+import { Event } from '../event/event.entity';
 import { School } from '../school/school.entity';
-import { Event } from 'src/event/event.entity';
+import { BaseEntity } from '../shared/base.entity';
 
 @Entity()
-export class Athlete {
+export class Athlete extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   registrationId: string;
 

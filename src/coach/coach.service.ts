@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { School } from 'src/school/school.entity';
+import { ApiResponse } from 'src/shared/dto/api-response.dto';
 import { Repository } from 'typeorm';
 import { CoachDto } from './coach.dto';
 import { Coach } from './coach.entity';
@@ -93,10 +94,24 @@ export class CoachService {
     }
   }
 
-  async deleteCoach(id: string): Promise<void> {
-    const result = await this.coachRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`Coach with ID ${id} not found`);
+  async deleteCoach(id: string): Promise<ApiResponse<any>> {
+    try {
+      const today: Date = new Date();
+      const coach: Coach = await this.findOne(id); // Fetch the coach by ID
+      if (!coach) {
+        throw new NotFoundException(`Coach with ID ${id} not found`);
+      }
+
+      coach.deletedOn = today;
+      await this.coachRepository.save(coach);
+      return ApiResponse.success('Coach deleted successfully');
+    } catch (error) {
+      if (error.code === '22P02') {
+        throw new BadRequestException(
+          'Invalid format / syntax for input value',
+        );
+      }
+      throw error;
     }
   }
 }

@@ -1,7 +1,8 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from 'typeorm';
-import { Accommodation } from 'src/accommodation/accommodation.entity';
+import { Accommodation } from '../accommodation/accommodation.entity';
+import { BaseEntity } from '../shared/base.entity';
 @Entity()
-export class Block {
+export class Block extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   blockId: string;
 

@@ -4,13 +4,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EventCategory } from 'src/event/enums/event-category.enum';
-import { EventSportGroup } from 'src/event/enums/event-sport-group.enum';
-import { EventType } from 'src/event/enums/event-type.enum';
-import { Event } from 'src/event/event.entity';
-import { calculateAge } from 'src/shared/utils/date-utils';
 import { In, Repository } from 'typeorm';
+import { EventCategory } from '../event/enums/event-category.enum';
+import { EventSportGroup } from '../event/enums/event-sport-group.enum';
+import { EventType } from '../event/enums/event-type.enum';
+import { Event } from '../event/event.entity';
 import { School } from '../school/school.entity';
+import { ApiResponse } from '../shared/dto/api-response.dto';
+import { calculateAge } from '../shared/utils/date-utils';
 import { AthleteDto } from './athlete.dto';
 import { Athlete } from './athlete.entity';
 
@@ -352,10 +353,25 @@ export class AthleteService {
     }
   }
 
-  async deleteAthlete(id: string): Promise<void> {
-    const result = await this.athleteRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`Athlete with ID ${id} not found`);
+  async deleteAthlete(id: string): Promise<ApiResponse<any>> {
+    try {
+      const today: Date = new Date();
+      const athlete: Athlete = await this.findOne(id); // Fetch the athlete by ID
+      if (!athlete) {
+        throw new NotFoundException(`Athlete with ID ${id} not found`);
+      }
+
+      athlete.deletedOn = today;
+      await this.athleteRepository.save(athlete);
+
+      return ApiResponse.success('Athlete deleted successfully');
+    } catch (error) {
+      if (error.code === '22P02') {
+        throw new BadRequestException(
+          'Invalid format / syntax for input value',
+        );
+      }
+      throw error; // Rethrow any other errors
     }
   }
 }

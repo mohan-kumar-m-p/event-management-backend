@@ -1,11 +1,12 @@
-import { Athlete } from 'src/athlete/athlete.entity';
 import { Column, Entity, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Athlete } from '../athlete/athlete.entity';
+import { BaseEntity } from '../shared/base.entity';
 import { EventCategory } from './enums/event-category.enum';
-import { EventType } from './enums/event-type.enum';
 import { EventSportGroup } from './enums/event-sport-group.enum';
+import { EventType } from './enums/event-type.enum';
 
 @Entity()
-export class Event {
+export class Event extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   eventId: string;
 

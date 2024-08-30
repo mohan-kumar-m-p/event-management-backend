@@ -1,15 +1,16 @@
 import {
-  Entity,
   Column,
-  PrimaryGeneratedColumn,
-  ManyToOne,
+  Entity,
   JoinColumn,
+  ManyToOne,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
-import { School } from '../school/school.entity';
 import { Accommodation } from '../accommodation/accommodation.entity';
+import { School } from '../school/school.entity';
+import { BaseEntity } from '../shared/base.entity';
 
 @Entity()
-export class Manager {
+export class Manager extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   managerId: string;
 

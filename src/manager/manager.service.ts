@@ -3,11 +3,12 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { School } from 'src/school/school.entity';
-import { ManagerDto } from './manager.dto';
-import { Manager } from './manager.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { School } from '../school/school.entity';
+import { ApiResponse } from '../shared/dto/api-response.dto';
+import { ManagerDto } from './manager.dto';
+import { Manager } from './manager.entity';
 
 @Injectable()
 export class ManagerService {
@@ -92,10 +93,25 @@ export class ManagerService {
     }
   }
 
-  async deleteManager(id: string): Promise<void> {
-    const result = await this.managerRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`Manager with ID ${id} not found`);
+  async deleteManager(id: string): Promise<ApiResponse<any>> {
+    try {
+      const today: Date = new Date();
+      const manager: Manager = await this.findOne(id); // Fetch the manager by ID
+      if (!manager) {
+        throw new NotFoundException(`Manager with ID ${id} not found`);
+      }
+
+      manager.deletedOn = today; // Set the deletedOn property to mark as soft deleted
+      await this.managerRepository.save(manager); // Save the updated manager entity
+
+      return ApiResponse.success('Manager deleted successfully'); // Return success response
+    } catch (error) {
+      if (error.code === '22P02') {
+        throw new BadRequestException(
+          'Invalid format / syntax for input value',
+        );
+      }
+      throw error; // Rethrow any other errors
     }
   }
 }

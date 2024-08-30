@@ -1,10 +1,11 @@
-import { Entity, Column, OneToMany, PrimaryColumn } from 'typeorm';
-import { Athlete } from 'src/athlete/athlete.entity';
-import { Manager } from 'src/manager/manager.entity';
-import { Coach } from 'src/coach/coach.entity';
+import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
+import { Athlete } from '../athlete/athlete.entity';
+import { Coach } from '../coach/coach.entity';
+import { Manager } from '../manager/manager.entity';
+import { BaseEntity } from '../shared/base.entity';
 
 @Entity()
-export class School {
+export class School extends BaseEntity {
   @PrimaryColumn()
   affiliationNumber: string;
 
