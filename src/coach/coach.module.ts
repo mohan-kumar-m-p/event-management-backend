@@ -1,15 +1,16 @@
 import { Module } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CoachService } from './coach.service';
+import { Accommodation } from '../accommodation/accommodation.entity';
+import { School } from '../school/school.entity';
 import { CoachController } from './coach.controller';
 import { Coach } from './coach.entity';
-import { School } from 'src/school/school.entity';
-import { Accommodation } from 'src/accommodation/accommodation.entity';
+import { CoachService } from './coach.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Coach, School, Accommodation])],
   controllers: [CoachController],
-  providers: [CoachService],
+  providers: [CoachService, JwtService],
   exports: [CoachService],
 })
 export class CoachModule {}

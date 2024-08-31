@@ -7,11 +7,14 @@ import {
   Param,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { ApiResponse } from 'src/shared/dto/api-response.dto';
 import { ManagerDto } from './manager.dto';
 import { ManagerService } from './manager.service';
-import { ApiResponse } from 'src/shared/dto/api-response.dto';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller('manager')
 export class ManagerController {
   constructor(private readonly managerService: ManagerService) {}

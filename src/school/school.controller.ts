@@ -1,7 +1,9 @@
-import { Controller, Get, Param } from '@nestjs/common';
-import { SchoolService } from './school.service';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { ApiResponse } from 'src/shared/dto/api-response.dto';
+import { SchoolService } from './school.service';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller('school')
 export class SchoolController {
   constructor(private readonly schoolService: SchoolService) {}

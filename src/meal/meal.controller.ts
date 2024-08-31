@@ -1,7 +1,15 @@
-import { Controller, NotFoundException, Post, Query } from '@nestjs/common';
+import {
+  Controller,
+  NotFoundException,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { ApiResponse } from 'src/shared/dto/api-response.dto';
 import { MealService } from './meal.service';
 
+UseGuards(AuthGuard('jwt'));
 @Controller('verify-meal')
 export class MealController {
   constructor(private readonly mealService: MealService) {}

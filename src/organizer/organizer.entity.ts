@@ -1,5 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { BaseEntity } from '../shared/base.entity';
+import { OrganizerRole } from './roles';
 
 @Entity({ name: 'organizer' })
 export class Organizer extends BaseEntity {
@@ -11,4 +12,7 @@ export class Organizer extends BaseEntity {
 
   @Column()
   password: string;
+
+  @Column({ type: 'enum', enum: OrganizerRole, array: true })
+  roles: OrganizerRole[];
 }
