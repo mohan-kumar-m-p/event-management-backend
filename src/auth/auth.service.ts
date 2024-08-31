@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { OrganizerService } from '../organizer/organizer.service';
 import { verifyPassword } from './utils/utils';
-import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
@@ -38,8 +38,9 @@ export class AuthService {
 
   login(authenticatedUser: Record<string, string>): Record<string, string> {
     const jwtPaylod: any = {
-      email: authenticatedUser.email,
       sub: authenticatedUser.id,
+      email: authenticatedUser.email,
+      roles: authenticatedUser.roles,
     };
     return {
       access_token: this.jwtService.sign(jwtPaylod),

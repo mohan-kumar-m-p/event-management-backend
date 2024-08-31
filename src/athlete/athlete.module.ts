@@ -1,15 +1,16 @@
 import { Module } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AthleteService } from './athlete.service';
+import { Event } from '../event/event.entity';
+import { School } from '../school/school.entity';
 import { AthleteController } from './athlete.controller';
 import { Athlete } from './athlete.entity';
-import { School } from '../school/school.entity';
-import { Event } from 'src/event/event.entity';
+import { AthleteService } from './athlete.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Athlete, School, Event])],
   controllers: [AthleteController],
-  providers: [AthleteService],
+  providers: [AthleteService, JwtService],
   exports: [AthleteService],
 })
 export class AthleteModule {}

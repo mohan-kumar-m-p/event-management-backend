@@ -1,7 +1,9 @@
-import { Controller, Get, Param } from '@nestjs/common';
-import { EventService } from './event.service';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { ApiResponse } from 'src/shared/dto/api-response.dto';
+import { EventService } from './event.service';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller('event')
 export class EventController {
   constructor(private readonly eventService: EventService) {}
