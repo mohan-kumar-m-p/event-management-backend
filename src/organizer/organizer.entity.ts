@@ -13,6 +13,6 @@ export class Organizer extends BaseEntity {
   @Column()
   password: string;
 
-  @Column({ type: 'enum', enum: OrganizerRole, array: true })
+  @Column({ type: 'enum', enum: OrganizerRole, array: true, nullable: true })
   roles: OrganizerRole[];
 }

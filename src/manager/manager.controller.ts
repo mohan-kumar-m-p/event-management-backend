@@ -11,8 +11,10 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiResponse } from 'src/shared/dto/api-response.dto';
-import { ManagerDto } from './manager.dto';
+import { CreateManagerDto } from './dto/create-manager.dto';
+import { UpdateManagerDto } from './dto/update-manager.dto';
 import { ManagerService } from './manager.service';
+import { Request } from '@nestjs/common';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('manager')
@@ -20,8 +22,15 @@ export class ManagerController {
   constructor(private readonly managerService: ManagerService) {}
 
   @Post()
-  async create(@Body() managerDto: ManagerDto): Promise<ApiResponse<any>> {
-    const manager = await this.managerService.createManager(managerDto);
+  async create(
+    @Body() managerDto: CreateManagerDto,
+    @Request() req,
+  ): Promise<ApiResponse<any>> {
+    const schoolAffiliationNumber = req?.user?.entity || null;
+    const manager = await this.managerService.createManager(
+      managerDto,
+      schoolAffiliationNumber,
+    );
     return ApiResponse.success(
       'Manager created successfully',
       manager,
@@ -44,7 +53,7 @@ export class ManagerController {
   @Put(':id')
   async update(
     @Param('id') id: string,
-    @Body() managerDto: ManagerDto,
+    @Body() managerDto: UpdateManagerDto,
   ): Promise<ApiResponse<any>> {
     const updatedManager = await this.managerService.updateManager(
       id,

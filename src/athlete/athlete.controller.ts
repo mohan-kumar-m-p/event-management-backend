@@ -11,8 +11,10 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiResponse } from '../shared/dto/api-response.dto';
-import { AthleteDto } from './athlete.dto';
 import { AthleteService } from './athlete.service';
+import { CreateAthleteDto } from './dto/create-athlete.dto';
+import { UpdateAthleteDto } from './dto/update-athlete.dto';
+import { Request } from '@nestjs/common';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('athlete')
@@ -20,8 +22,14 @@ export class AthleteController {
   constructor(private readonly athleteService: AthleteService) {}
 
   @Post()
-  async create(@Body() athleteDto: AthleteDto): Promise<ApiResponse<any>> {
-    const athlete = await this.athleteService.createAthlete(athleteDto);
+  async create(
+    @Body() athleteDto: CreateAthleteDto,
+    @Request() req,
+  ): Promise<ApiResponse<any>> {
+    const athlete = await this.athleteService.createAthlete(
+      athleteDto,
+      req.user.sub,
+    );
     return ApiResponse.success(
       'Athlete created successfully',
       athlete,
@@ -44,7 +52,7 @@ export class AthleteController {
   @Put(':id')
   async update(
     @Param('id') id: string,
-    @Body() athleteDto: AthleteDto,
+    @Body() athleteDto: UpdateAthleteDto,
   ): Promise<ApiResponse<any>> {
     const updatedAthlete = await this.athleteService.updateAthlete(
       id,

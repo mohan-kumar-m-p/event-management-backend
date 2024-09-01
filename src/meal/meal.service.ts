@@ -4,6 +4,8 @@ import { Athlete } from 'src/athlete/athlete.entity';
 import { Coach } from 'src/coach/coach.entity';
 import { Manager } from 'src/manager/manager.entity';
 import { Repository } from 'typeorm';
+import * as QRCode from 'qrcode';
+
 @Injectable()
 export class MealService {
   constructor(
@@ -14,6 +16,23 @@ export class MealService {
     @InjectRepository(Coach)
     private readonly coachRepository: Repository<Coach>,
   ) {}
+
+  async generateQRCode(id: string, entity: string): Promise<string> {
+    const entityQueryParams = {
+      athlete: 'registrationId',
+      manager: 'managerId',
+      coach: 'coachId',
+    };
+
+    const queryParam = entityQueryParams[entity];
+
+    const url = `https://your-domain.com/verify-meal?${queryParam}=${id}`;
+
+    // Generate QR code
+    const qrCode = await QRCode.toDataURL(url);
+
+    return qrCode;
+  }
 
   async verifyMeal(
     id: string,

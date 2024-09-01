@@ -1,11 +1,11 @@
-import { IsNotEmpty, IsString, IsDate } from 'class-validator';
+import { IsNotEmpty, IsString, IsDate, IsOptional } from 'class-validator';
 
-export class CoachDto {
+export class CreateManagerDto {
   @IsNotEmpty()
   @IsString()
   name: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   affiliationNumber: string;
 

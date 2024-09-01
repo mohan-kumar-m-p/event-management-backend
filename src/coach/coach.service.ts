@@ -7,7 +7,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { School } from 'src/school/school.entity';
 import { ApiResponse } from 'src/shared/dto/api-response.dto';
 import { Repository } from 'typeorm';
-import { CoachDto } from './coach.dto';
+import { CreateCoachDto } from './dto/create-coach.dto';
+import { UpdateCoachDto } from './dto/update-coach.dto';
 import { Coach } from './coach.entity';
 
 @Injectable()
@@ -19,8 +20,17 @@ export class CoachService {
     private readonly schoolRepository: Repository<School>,
   ) {}
 
-  async createCoach(coachDto: CoachDto): Promise<Coach> {
-    // Find the school by affiliationNumber
+  async createCoach(
+    coachDto: CreateCoachDto,
+    schoolAffiliationNumber: string,
+  ): Promise<Coach> {
+    const affiliationNumber =
+      coachDto.affiliationNumber || schoolAffiliationNumber;
+
+    if (!affiliationNumber) {
+      throw new BadRequestException('School affiliation number is required');
+    }
+
     const school = await this.schoolRepository.findOne({
       where: { affiliationNumber: coachDto.affiliationNumber },
     });
@@ -36,30 +46,58 @@ export class CoachService {
       school: school,
     });
 
-    // Save the coach entity without the QR code first
     await this.coachRepository.save(coach);
-    return coach;
+    const result = {
+      ...coach,
+      affiliationNumber: coach.school.affiliationNumber,
+      accommodationId: coach.accommodation?.accommodationId || null,
+    };
+    delete result.school;
+    delete result.accommodation;
+    return result;
   }
 
   async findAll(): Promise<Coach[]> {
-    const coaches = await this.coachRepository.find();
+    const coaches = await this.coachRepository.find({
+      relations: ['school', 'accommodation'],
+    });
     if (!coaches) {
       throw new NotFoundException('No coaches found');
     }
-    return coaches;
+    const result = coaches.map((coach) => {
+      const transformedCoach = {
+        ...coach,
+        affiliationNumber: coach.school.affiliationNumber,
+        accommodationId: coach.accommodation?.accommodationId || null,
+      };
+      delete transformedCoach.school;
+      delete transformedCoach.accommodation;
+      return transformedCoach;
+    });
+    return result;
   }
 
   async findOne(id: string): Promise<Coach> {
     const coach = await this.coachRepository.findOne({
       where: { coachId: id },
+      relations: ['school', 'accommodation'],
     });
     if (!coach) {
       throw new NotFoundException(`Coach with ID ${id} not found`);
     }
-    return coach;
+
+    const result = {
+      ...coach,
+      affiliationNumber: coach.school.affiliationNumber,
+      accommodationId: coach.accommodation?.accommodationId || null,
+    };
+
+    delete result.school;
+    delete result.accommodation;
+    return result;
   }
 
-  async updateCoach(id: string, coachDto: CoachDto): Promise<Coach> {
+  async updateCoach(id: string, coachDto: UpdateCoachDto): Promise<Coach> {
     // Fetch the existing coach from the database
     const existingCoach = await this.findOne(id);
     if (!existingCoach) {
@@ -86,9 +124,17 @@ export class CoachService {
 
       existingCoach.school = school;
     }
+    const result = {
+      ...existingCoach,
+      affiliationNumber: existingCoach.school.affiliationNumber,
+      accommodationId: existingCoach.accommodation?.accommodationId || null,
+    };
+    delete result.school;
+    delete result.accommodation;
 
     try {
-      return this.coachRepository.save(existingCoach);
+      await this.coachRepository.save(existingCoach);
+      return result;
     } catch (error) {
       throw new BadRequestException('Failed to update coach');
     }
@@ -104,7 +150,7 @@ export class CoachService {
 
       coach.deletedOn = today;
       await this.coachRepository.save(coach);
-      return ApiResponse.success('Coach deleted successfully');
+      return ApiResponse.success(`Coach with ID ${id} deleted successfully`);
     } catch (error) {
       if (error.code === '22P02') {
         throw new BadRequestException(

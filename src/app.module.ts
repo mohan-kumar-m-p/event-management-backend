@@ -12,6 +12,7 @@ import { MealModule } from './meal/meal.module';
 import { OrganizerModule } from './organizer/organizer.module';
 import { SchoolModule } from './school/school.module';
 import { WildcardController } from './wildcard.controller';
+import { RoundModule } from './round/round.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { WildcardController } from './wildcard.controller';
     AccommodationModule,
     BlockModule,
     EventModule,
+    RoundModule,
     MealModule,
     AuthModule,
     OrganizerModule,
