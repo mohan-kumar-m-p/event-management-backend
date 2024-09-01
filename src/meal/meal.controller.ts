@@ -8,11 +8,21 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiResponse } from 'src/shared/dto/api-response.dto';
 import { MealService } from './meal.service';
+import { Request } from '@nestjs/common';
 
-UseGuards(AuthGuard('jwt'));
-@Controller('verify-meal')
+@UseGuards(AuthGuard('jwt'))
+@Controller('meal')
 export class MealController {
   constructor(private readonly mealService: MealService) {}
+
+  @Post('generate-qr-code')
+  async generateQrCode(@Request() req): Promise<ApiResponse<any>> {
+    const qrCode = await this.mealService.generateQRCode(
+      req.user.sub,
+      req.user.entity,
+    );
+    return ApiResponse.success('QR Code generated successfully', qrCode);
+  }
 
   @Post()
   async verifyMeal(

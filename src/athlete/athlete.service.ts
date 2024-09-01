@@ -12,8 +12,9 @@ import { Event } from '../event/event.entity';
 import { School } from '../school/school.entity';
 import { ApiResponse } from '../shared/dto/api-response.dto';
 import { calculateAge } from '../shared/utils/date-utils';
-import { AthleteDto } from './athlete.dto';
+import { CreateAthleteDto } from './dto/create-athlete.dto';
 import { Athlete } from './athlete.entity';
+import { UpdateAthleteDto } from './dto/update-athlete.dto';
 
 @Injectable()
 export class AthleteService {
@@ -26,7 +27,17 @@ export class AthleteService {
     private readonly eventRepository: Repository<Event>,
   ) {}
 
-  async createAthlete(athleteDto: AthleteDto): Promise<Athlete> {
+  async createAthlete(
+    athleteDto: CreateAthleteDto,
+    schoolAffiliationNumber: string,
+  ): Promise<Athlete> {
+    const affiliationNumber =
+      athleteDto.affiliationNumber || schoolAffiliationNumber;
+
+    if (!affiliationNumber) {
+      throw new BadRequestException('School affiliation number is required');
+    }
+
     const school = await this.schoolRepository.findOne({
       where: { affiliationNumber: athleteDto.affiliationNumber },
     });
@@ -47,25 +58,53 @@ export class AthleteService {
     });
 
     await this.athleteRepository.save(athlete);
-    return athlete;
+    const result = {
+      ...athlete,
+      affiliationNumber: athlete.school.affiliationNumber,
+      accommodationId: athlete.accommodation?.accommodationId || null,
+    };
+    delete result.school;
+    delete result.accommodation;
+    return result;
   }
 
   async findAll(): Promise<Athlete[]> {
-    const athletes = await this.athleteRepository.find();
+    const athletes = await this.athleteRepository.find({
+      relations: ['school', 'accommodation'],
+    });
     if (!athletes) {
       throw new NotFoundException('No athletes found');
     }
-    return athletes;
+    const result = athletes.map((athlete) => {
+      const transformedAthlete = {
+        ...athlete,
+        affiliationNumber: athlete.school.affiliationNumber,
+        accommodationId: athlete.accommodation?.accommodationId || null,
+      };
+      delete transformedAthlete.school;
+      delete transformedAthlete.accommodation;
+      return transformedAthlete;
+    });
+    return result;
   }
 
   async findOne(id: string): Promise<Athlete> {
     const athlete = await this.athleteRepository.findOne({
       where: { registrationId: id },
+      relations: ['school', 'accommodation'],
     });
     if (!athlete) {
       throw new NotFoundException(`Athlete with ID ${id} not found`);
     }
-    return athlete;
+    const result = {
+      ...athlete,
+      affiliationNumber: athlete.school.affiliationNumber,
+      accommodationId: athlete.accommodation?.accommodationId || null,
+    };
+
+    delete result.school;
+    delete result.accommodation;
+    return result;
   }
 
   async findEligibleEvents(id: string): Promise<Event[]> {
@@ -96,7 +135,10 @@ export class AthleteService {
     return events;
   }
 
-  async updateAthlete(id: string, athleteDto: AthleteDto): Promise<Athlete> {
+  async updateAthlete(
+    id: string,
+    athleteDto: UpdateAthleteDto,
+  ): Promise<Athlete> {
     const existingAthlete = await this.findOne(id);
     if (!existingAthlete) {
       throw new NotFoundException(`Athlete with ID ${id} not found`);
@@ -122,9 +164,17 @@ export class AthleteService {
 
       existingAthlete.school = school;
     }
+    const result = {
+      ...existingAthlete,
+      affiliationNumber: existingAthlete.school.affiliationNumber,
+      accommodationId: existingAthlete.accommodation?.accommodationId || null,
+    };
+    delete result.school;
+    delete result.accommodation;
 
     try {
-      return await this.athleteRepository.save(existingAthlete);
+      await this.athleteRepository.save(existingAthlete);
+      return result;
     } catch (error) {
       throw new BadRequestException('Failed to update athlete');
     }
@@ -144,7 +194,7 @@ export class AthleteService {
       throw new BadRequestException('No events provided');
     }
 
-    const events = await this.eventRepository.findByIds(eventIds);
+    const events = await this.eventRepository.findBy({ eventId: In(eventIds) });
 
     if (events.length !== eventIds.length) {
       throw new NotFoundException('One or more events not found');
@@ -364,7 +414,7 @@ export class AthleteService {
       athlete.deletedOn = today;
       await this.athleteRepository.save(athlete);
 
-      return ApiResponse.success('Athlete deleted successfully');
+      return ApiResponse.success(`Athlete with ID ${id} deleted successfully`);
     } catch (error) {
       if (error.code === '22P02') {
         throw new BadRequestException(

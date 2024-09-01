@@ -23,6 +23,9 @@ export class Accommodation extends BaseEntity {
   @Column()
   capacity: number;
 
+  @Column({ nullable: true })
+  vacancies: number;
+
   @ManyToOne(() => Block, (block) => block.accommodations)
   @JoinColumn({ name: 'blockId' })
   block: Block;

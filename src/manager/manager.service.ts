@@ -7,7 +7,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { School } from '../school/school.entity';
 import { ApiResponse } from '../shared/dto/api-response.dto';
-import { ManagerDto } from './manager.dto';
+import { CreateManagerDto } from './dto/create-manager.dto';
+import { UpdateManagerDto } from './dto/update-manager.dto';
+
 import { Manager } from './manager.entity';
 
 @Injectable()
@@ -19,8 +21,17 @@ export class ManagerService {
     private readonly schoolRepository: Repository<School>,
   ) {}
 
-  async createManager(managerDto: ManagerDto): Promise<Manager> {
-    // Find the school by affiliationNumber
+  async createManager(
+    managerDto: CreateManagerDto,
+    schoolAffiliationNumber: string,
+  ): Promise<Manager> {
+    const affiliationNumber =
+      managerDto.affiliationNumber || schoolAffiliationNumber;
+
+    if (!affiliationNumber) {
+      throw new BadRequestException('School affiliation number is required');
+    }
+
     const school = await this.schoolRepository.findOne({
       where: { affiliationNumber: managerDto.affiliationNumber },
     });
@@ -37,7 +48,14 @@ export class ManagerService {
     });
 
     await this.managerRepository.save(manager);
-    return manager;
+    const result = {
+      ...manager,
+      affiliationNumber: manager.school.affiliationNumber,
+      accommodationId: manager.accommodation?.accommodationId || null,
+    };
+    delete result.school;
+    delete result.accommodation;
+    return result;
   }
 
   async findAll(): Promise<Manager[]> {
@@ -58,7 +76,10 @@ export class ManagerService {
     return manager;
   }
 
-  async updateManager(id: string, managerDto: ManagerDto): Promise<Manager> {
+  async updateManager(
+    id: string,
+    managerDto: UpdateManagerDto,
+  ): Promise<Manager> {
     // Fetch the existing manager from the database
     const existingManager = await this.findOne(id);
     if (!existingManager) {

@@ -1,9 +1,16 @@
-import { Column, Entity, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToMany,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 import { Athlete } from '../athlete/athlete.entity';
 import { BaseEntity } from '../shared/base.entity';
 import { EventCategory } from './enums/event-category.enum';
 import { EventSportGroup } from './enums/event-sport-group.enum';
 import { EventType } from './enums/event-type.enum';
+import { Round } from '../round/round.entity';
 
 @Entity()
 export class Event extends BaseEntity {
@@ -34,9 +41,9 @@ export class Event extends BaseEntity {
   @Column()
   gender: string;
 
-  @Column({ nullable: true })
-  price: string;
-
   @ManyToMany(() => Athlete, (athlete) => athlete.events)
   athletes: Athlete[];
+
+  @OneToMany(() => Round, (round) => round.event)
+  rounds: Round[];
 }

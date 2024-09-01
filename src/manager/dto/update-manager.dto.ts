@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString, IsDate } from 'class-validator';
 
-export class ManagerDto {
+export class UpdateManagerDto {
   @IsNotEmpty()
   @IsString()
   name: string;
