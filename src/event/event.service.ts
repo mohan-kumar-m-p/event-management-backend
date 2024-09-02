@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventType } from './enums/event-type.enum';
 import { Event } from './event.entity';
 
 @Injectable()
@@ -26,5 +27,53 @@ export class EventService {
       throw new NotFoundException(`Event with ID ${id} not found`);
     }
     return event;
+  }
+
+  async findIndividualEvents(): Promise<{ [key: string]: Event[] }> {
+    const individualEvents = await this.eventRepository.find({
+      where: { type: EventType.Individual },
+    });
+
+    if (!individualEvents || individualEvents.length === 0) {
+      throw new NotFoundException(`No individual events found`);
+    }
+
+    const groupedEvents = individualEvents.reduce(
+      (acc, event) => {
+        const sportGroup = event.sportGroup.toLowerCase();
+        if (!acc[sportGroup]) {
+          acc[sportGroup] = [];
+        }
+        acc[sportGroup].push(event);
+        return acc;
+      },
+      {} as { [key: string]: Event[] },
+    );
+
+    return groupedEvents;
+  }
+
+  async findGroupEvents(): Promise<{ [key: string]: Event[] }> {
+    const groupEvents = await this.eventRepository.find({
+      where: { type: EventType.Group },
+    });
+
+    if (!groupEvents || groupEvents.length === 0) {
+      throw new NotFoundException(`No group events found`);
+    }
+
+    const groupedEvents = groupEvents.reduce(
+      (acc, event) => {
+        const sportGroup = event.sportGroup.toLowerCase();
+        if (!acc[sportGroup]) {
+          acc[sportGroup] = [];
+        }
+        acc[sportGroup].push(event);
+        return acc;
+      },
+      {} as { [key: string]: Event[] },
+    );
+
+    return groupedEvents;
   }
 }

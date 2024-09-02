@@ -14,6 +14,21 @@ export class EventController {
     return ApiResponse.success('Events retrieved successfully', events);
   }
 
+  @Get('individual-events')
+  async findIndividualEvents(): Promise<ApiResponse<any>> {
+    const events = await this.eventService.findIndividualEvents();
+    return ApiResponse.success(
+      'Individual events retrieved successfully',
+      events,
+    );
+  }
+
+  @Get('group-events')
+  async findGroupEvents(): Promise<ApiResponse<any>> {
+    const events = await this.eventService.findGroupEvents();
+    return ApiResponse.success('Group events retrieved successfully', events);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<ApiResponse<any>> {
     const event = await this.eventService.findOne(id);
