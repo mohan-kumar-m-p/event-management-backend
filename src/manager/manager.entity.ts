@@ -48,4 +48,10 @@ export class Manager extends BaseEntity {
   @ManyToOne(() => Accommodation, (accommodation) => accommodation.managers)
   @JoinColumn({ name: 'accommodationId' })
   accommodation: Accommodation;
+
+  @Column({ nullable: true })
+  otp: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  otpExpiry: Date;
 }
