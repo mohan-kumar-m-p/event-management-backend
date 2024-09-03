@@ -83,4 +83,10 @@ export class Athlete extends BaseEntity {
     },
   })
   events: Event[];
+
+  @Column({ type: 'timestamp', nullable: true })
+  otp: string;
+
+  @Column({ nullable: true })
+  otpExpiry: Date;
 }

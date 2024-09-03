@@ -48,4 +48,10 @@ export class Coach extends BaseEntity {
   @ManyToOne(() => Accommodation, (accommodation) => accommodation.coaches)
   @JoinColumn({ name: 'accommodationId' })
   accommodation: Accommodation;
+
+  @Column({ type: 'timestamp', nullable: true })
+  otp: string;
+
+  @Column({ nullable: true })
+  otpExpiry: Date;
 }
