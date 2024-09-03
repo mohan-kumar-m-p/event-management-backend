@@ -50,7 +50,10 @@ export class CoachService {
     const result = {
       ...coach,
       affiliationNumber: coach.school.affiliationNumber,
+      schoolName: coach.school.name,
       accommodationId: coach.accommodation?.accommodationId || null,
+      accommodationName: coach.accommodation?.name || null,
+      blockName: coach.accommodation?.block.name || null,
     };
     delete result.school;
     delete result.accommodation;
@@ -68,7 +71,10 @@ export class CoachService {
       const transformedCoach = {
         ...coach,
         affiliationNumber: coach.school.affiliationNumber,
+        schoolName: coach.school.name,
         accommodationId: coach.accommodation?.accommodationId || null,
+        accommodationName: coach.accommodation?.name || null,
+        blockName: coach.accommodation?.block.name || null,
       };
       delete transformedCoach.school;
       delete transformedCoach.accommodation;
@@ -89,7 +95,10 @@ export class CoachService {
     const result = {
       ...coach,
       affiliationNumber: coach.school.affiliationNumber,
+      schoolName: coach.school.name,
       accommodationId: coach.accommodation?.accommodationId || null,
+      accommodationName: coach.accommodation?.name || null,
+      blockName: coach.accommodation?.block.name || null,
     };
 
     delete result.school;
@@ -106,7 +115,9 @@ export class CoachService {
 
     // Update fields from the DTO
     existingCoach.name = coachDto.name;
-    existingCoach.dob = coachDto.dob;
+    existingCoach.dob = coachDto.dob
+      ? new Date(coachDto.dob)
+      : existingCoach.dob;
     existingCoach.gender = coachDto.gender;
     existingCoach.aadhaarNumber = coachDto.aadhaarNumber;
     existingCoach.phone = coachDto.phone;

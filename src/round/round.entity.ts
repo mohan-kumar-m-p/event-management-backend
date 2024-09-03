@@ -1,6 +1,14 @@
-import { Column, Entity, ManyToOne, PrimaryColumn } from 'typeorm';
-import { BaseEntity } from '../shared/base.entity';
+import { Heat } from 'src/heat/heat.entity';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryColumn,
+} from 'typeorm';
 import { Event } from '../event/event.entity';
+import { BaseEntity } from '../shared/base.entity';
 import { Round as RoundEnum } from './enums/round.enum';
 
 @Entity()
@@ -15,11 +23,15 @@ export class Round extends BaseEntity {
   round: RoundEnum;
 
   @ManyToOne(() => Event, (event) => event.rounds)
+  @JoinColumn({ name: 'eventId' })
   event: Event;
 
-  @Column()
+  @Column({ nullable: true, type: 'date' })
   date: Date;
 
-  @Column({ type: 'time' })
+  @Column({ nullable: true, type: 'time' })
   time: string;
+
+  @OneToMany(() => Heat, (heat) => heat.round)
+  heats: Heat[];
 }

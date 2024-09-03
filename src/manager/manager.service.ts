@@ -51,7 +51,10 @@ export class ManagerService {
     const result = {
       ...manager,
       affiliationNumber: manager.school.affiliationNumber,
+      schoolName: manager.school.name,
       accommodationId: manager.accommodation?.accommodationId || null,
+      accommodationName: manager.accommodation?.name || null,
+      blockName: manager.accommodation?.block.name || null,
     };
     delete result.school;
     delete result.accommodation;
@@ -63,7 +66,20 @@ export class ManagerService {
     if (!managers) {
       throw new NotFoundException('No managers found');
     }
-    return managers;
+    const result = managers.map((manager) => {
+      const transformedManager = {
+        ...manager,
+        affiliationNumber: manager.school.affiliationNumber,
+        schoolName: manager.school.name,
+        accommodationId: manager.accommodation?.accommodationId || null,
+        accommodationName: manager.accommodation?.name || null,
+        blockName: manager.accommodation?.block.name || null,
+      };
+      delete transformedManager.school;
+      delete transformedManager.accommodation;
+      return transformedManager;
+    });
+    return result;
   }
 
   async findOne(id: string): Promise<Manager> {
@@ -73,7 +89,17 @@ export class ManagerService {
     if (!manager) {
       throw new NotFoundException(`Manager with ID ${id} not found`);
     }
-    return manager;
+    const result = {
+      ...manager,
+      affiliationNumber: manager.school.affiliationNumber,
+      schoolName: manager.school.name,
+      accommodationId: manager.accommodation?.accommodationId || null,
+      accommodationName: manager.accommodation?.name || null,
+      blockName: manager.accommodation?.block.name || null,
+    };
+    delete result.school;
+    delete result.accommodation;
+    return result;
   }
 
   async updateManager(
@@ -88,7 +114,9 @@ export class ManagerService {
 
     // Update fields from the DTO
     existingManager.name = managerDto.name;
-    existingManager.dob = managerDto.dob;
+    existingManager.dob = managerDto.dob
+      ? new Date(managerDto.dob)
+      : existingManager.dob;
     existingManager.gender = managerDto.gender;
     existingManager.aadhaarNumber = managerDto.aadhaarNumber;
     existingManager.phone = managerDto.phone;

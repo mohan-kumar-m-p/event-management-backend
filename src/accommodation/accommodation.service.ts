@@ -43,10 +43,12 @@ export class AccommodationService {
 
   async assignAccommodation(
     accommodationId: string,
-    users: { id: string; type: 'athlete' | 'manager' | 'coach' }[],
+    userId: string,
+    role: 'athlete' | 'manager' | 'coach',
   ): Promise<Accommodation> {
     const accommodation = await this.accommodationRepository.findOne({
       where: { accommodationId: accommodationId },
+      relations: ['athletes', 'managers', 'coaches'],
     });
     if (!accommodation) {
       throw new NotFoundException(
@@ -54,63 +56,148 @@ export class AccommodationService {
       );
     }
 
-    if (users.length > accommodation.vacancies) {
+    if (accommodation.vacancies < 1) {
+      throw new BadRequestException(`No vacancy in ${accommodation.name}`);
+    }
+
+    let user;
+    let repository;
+    if (role === 'athlete') {
+      user = await this.athleteRepository.findOne({
+        where: { registrationId: userId },
+        relations: ['accommodation'],
+      });
+      repository = this.athleteRepository;
+    } else if (role === 'manager') {
+      user = await this.managerRepository.findOne({
+        where: { managerId: userId },
+        relations: ['accommodation'],
+      });
+      repository = this.managerRepository;
+    } else if (role === 'coach') {
+      user = await this.coachRepository.findOne({
+        where: { coachId: userId },
+        relations: ['accommodation'],
+      });
+      repository = this.coachRepository;
+    }
+
+    if (!user) {
+      throw new NotFoundException(`${role} with ID ${userId} not found`);
+    }
+
+    if (user.accommodation !== null) {
       throw new BadRequestException(
-        `Not enough vacancies. Available: ${accommodation.vacancies}, Required: ${users.length}`,
+        `User is already assigned to an accommodation: Accommodation: ${user.accommodation.name}, Bed Number: ${user.bedNumber}`,
       );
     }
 
-    const personsToAssign = await Promise.all(
-      users.map(async (user) => {
-        switch (user.type) {
-          case 'athlete':
-            return this.athleteRepository.findOne({
-              where: { registrationId: user.id },
-            });
-          case 'manager':
-            return this.managerRepository.findOne({
-              where: { managerId: user.id },
-            });
-          case 'coach':
-            return this.coachRepository.findOne({
-              where: { coachId: user.id },
-            });
-        }
-      }),
-    );
-
-    if (personsToAssign.some((person) => !person)) {
-      throw new NotFoundException('One or more persons not found');
+    // Find the next available bed number
+    const occupiedBedNumbers = new Set([
+      ...accommodation.athletes.map((a) => a.bedNumber),
+      ...accommodation.managers.map((m) => m.bedNumber),
+      ...accommodation.coaches.map((c) => c.bedNumber),
+    ]);
+    let bedNumber = 1;
+    while (occupiedBedNumbers.has(bedNumber)) {
+      bedNumber++;
     }
 
-    if (personsToAssign.some((person) => person.accommodation !== null)) {
+    if (bedNumber > accommodation.capacity) {
       throw new BadRequestException(
-        'One or more persons is already assigned to an accommodation',
+        `No available beds in ${accommodation.name}`,
       );
     }
 
-    const updatedAccommodation = await this.accommodationRepository.save({
-      ...accommodation,
-      vacancies: accommodation.vacancies - personsToAssign.length,
+    user.accommodation = accommodation;
+    user.bedNumber = bedNumber;
+    await repository.save(user);
+
+    // Update the accommodation
+    accommodation.vacancies -= 1;
+    if (role === 'athlete') accommodation.athletes.push(user);
+    if (role === 'manager') accommodation.managers.push(user);
+    if (role === 'coach') accommodation.coaches.push(user);
+
+    await this.accommodationRepository.save(accommodation);
+
+    return this.accommodationRepository.findOne({
+      where: { accommodationId: accommodationId },
+      relations: ['athletes', 'managers', 'coaches'],
+    });
+  }
+
+  async unassignAccommodation(
+    userId: string,
+    role: 'athlete' | 'manager' | 'coach',
+  ): Promise<Accommodation> {
+    let user;
+    let repository;
+    if (role === 'athlete') {
+      user = await this.athleteRepository.findOne({
+        where: { registrationId: userId },
+        relations: ['accommodation'],
+      });
+      repository = this.athleteRepository;
+    } else if (role === 'manager') {
+      user = await this.managerRepository.findOne({
+        where: { managerId: userId },
+        relations: ['accommodation'],
+      });
+      repository = this.managerRepository;
+    } else if (role === 'coach') {
+      user = await this.coachRepository.findOne({
+        where: { coachId: userId },
+        relations: ['accommodation'],
+      });
+      repository = this.coachRepository;
+    }
+
+    if (!user) {
+      throw new NotFoundException(`${role} with ID ${userId} not found`);
+    }
+
+    if (!user.accommodation) {
+      throw new BadRequestException(
+        `${role} is not assigned to any accommodation`,
+      );
+    }
+
+    const accommodation = await this.accommodationRepository.findOne({
+      where: { accommodationId: user.accommodation.accommodationId },
+      relations: ['athletes', 'managers', 'coaches'],
     });
 
-    await Promise.all(
-      personsToAssign.map(async (person, index) => {
-        person.accommodation = updatedAccommodation;
-        switch (users[index].type) {
-          case 'athlete':
-            await this.athleteRepository.save(person);
-            break;
-          case 'manager':
-            await this.managerRepository.save(person);
-            break;
-          case 'coach':
-            await this.coachRepository.save(person);
-            break;
-        }
-      }),
-    );
+    if (!accommodation) {
+      throw new NotFoundException(`Accommodation not found`);
+    }
 
-    return updatedAccommodation;
+    // Update the accommodation
+    accommodation.vacancies += 1;
+    if (role === 'athlete') {
+      accommodation.athletes = accommodation.athletes.filter(
+        (a) => a.registrationId !== userId,
+      );
+    } else if (role === 'manager') {
+      accommodation.managers = accommodation.managers.filter(
+        (m) => m.managerId !== userId,
+      );
+    } else if (role === 'coach') {
+      accommodation.coaches = accommodation.coaches.filter(
+        (c) => c.coachId !== userId,
+      );
+    }
+
+    // Update the user
+    user.accommodation = null;
+    user.bedNumber = null;
+    await repository.save(user);
+
+    await this.accommodationRepository.save(accommodation);
+
+    return this.accommodationRepository.findOne({
+      where: { accommodationId: accommodation.accommodationId },
+      relations: ['athletes', 'managers', 'coaches'],
+    });
   }
 }

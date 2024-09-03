@@ -49,6 +49,9 @@ export class Coach extends BaseEntity {
   @JoinColumn({ name: 'accommodationId' })
   accommodation: Accommodation;
 
+  @Column({ nullable: true })
+  bedNumber: number;
+
   @Column({ type: 'timestamp', nullable: true })
   otp: string;
 

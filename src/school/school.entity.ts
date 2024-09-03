@@ -47,4 +47,16 @@ export class School extends BaseEntity {
 
   @Column({ nullable: true })
   otpExpiry: Date;
+
+  @Column({ nullable: true })
+  transport: string;
+
+  @Column({ type: 'date', nullable: true })
+  dateOfArrival: Date;
+
+  @Column({ type: 'time', nullable: true })
+  timeOfArrival: string;
+
+  @Column({ nullable: true })
+  pickUpLocation: string;
 }

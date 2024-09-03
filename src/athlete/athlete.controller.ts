@@ -26,9 +26,10 @@ export class AthleteController {
     @Body() athleteDto: CreateAthleteDto,
     @Request() req,
   ): Promise<ApiResponse<any>> {
+    const schoolAffiliationNumber = req?.user?.entity || null;
     const athlete = await this.athleteService.createAthlete(
       athleteDto,
-      req.user.sub,
+      schoolAffiliationNumber,
     );
     return ApiResponse.success(
       'Athlete created successfully',
@@ -90,6 +91,15 @@ export class AthleteController {
       'Assigned events retrieved successfully',
       events,
     );
+  }
+
+  @Get(':id/athletes')
+  async getQualifiedAthletesByRound(
+    @Param('id') roundId: string,
+  ): Promise<ApiResponse<any>> {
+    const athletes =
+      await this.athleteService.getQualifiedAthletesByRound(roundId);
+    return ApiResponse.success('Rounds fetched successfully', athletes);
   }
 
   @Delete(':id/events')

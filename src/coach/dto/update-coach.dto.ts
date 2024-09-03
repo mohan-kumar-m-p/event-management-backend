@@ -1,4 +1,4 @@
-import { IsDate, IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class UpdateCoachDto {
   @IsNotEmpty()
@@ -10,8 +10,8 @@ export class UpdateCoachDto {
   affiliationNumber: string;
 
   @IsNotEmpty()
-  @IsDate()
-  dob: Date;
+  @IsString()
+  dob: string;
 
   @IsNotEmpty()
   @IsString()
