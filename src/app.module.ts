@@ -15,6 +15,8 @@ import { OrganizerModule } from './organizer/organizer.module';
 import { RoundModule } from './round/round.module';
 import { SchoolModule } from './school/school.module';
 import { WildcardController } from './wildcard.controller';
+import { HeatModule } from './heat/heat.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -44,9 +46,11 @@ import { WildcardController } from './wildcard.controller';
     BlockModule,
     EventModule,
     RoundModule,
+    HeatModule,
     MealModule,
     AuthModule,
     OrganizerModule,
+    PaymentModule,
   ],
   controllers: [WildcardController],
 })

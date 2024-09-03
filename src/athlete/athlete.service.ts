@@ -15,6 +15,7 @@ import { calculateAge } from '../shared/utils/date-utils';
 import { CreateAthleteDto } from './dto/create-athlete.dto';
 import { Athlete } from './athlete.entity';
 import { UpdateAthleteDto } from './dto/update-athlete.dto';
+import { Round } from 'src/round/round.entity';
 
 @Injectable()
 export class AthleteService {
@@ -25,6 +26,8 @@ export class AthleteService {
     private readonly schoolRepository: Repository<School>,
     @InjectRepository(Event)
     private readonly eventRepository: Repository<Event>,
+    @InjectRepository(Round)
+    private readonly roundRepository: Repository<Round>,
   ) {}
 
   async createAthlete(
@@ -61,14 +64,17 @@ export class AthleteService {
     const result = {
       ...athlete,
       affiliationNumber: athlete.school.affiliationNumber,
+      schoolName: athlete.school.name,
       accommodationId: athlete.accommodation?.accommodationId || null,
+      accommodationName: athlete.accommodation?.name || null,
+      blockName: athlete.accommodation?.block.name || null,
     };
     delete result.school;
     delete result.accommodation;
     return result;
   }
 
-  async findAll(): Promise<Athlete[]> {
+  async findAll(): Promise<any[]> {
     const athletes = await this.athleteRepository.find({
       relations: ['school', 'accommodation'],
     });
@@ -79,7 +85,10 @@ export class AthleteService {
       const transformedAthlete = {
         ...athlete,
         affiliationNumber: athlete.school.affiliationNumber,
+        schoolName: athlete.school.name,
         accommodationId: athlete.accommodation?.accommodationId || null,
+        accommodationName: athlete.accommodation?.name || null,
+        blockName: athlete.accommodation?.block.name || null,
       };
       delete transformedAthlete.school;
       delete transformedAthlete.accommodation;
@@ -99,7 +108,10 @@ export class AthleteService {
     const result = {
       ...athlete,
       affiliationNumber: athlete.school.affiliationNumber,
+      schoolName: athlete.school.name,
       accommodationId: athlete.accommodation?.accommodationId || null,
+      accommodationName: athlete.accommodation?.name || null,
+      blockName: athlete.accommodation?.block.name || null,
     };
 
     delete result.school;
@@ -401,6 +413,18 @@ export class AthleteService {
     } catch (error) {
       throw new BadRequestException('Failed to unassign events');
     }
+  }
+
+  async getQualifiedAthletesByRound(id: string): Promise<Athlete[]> {
+    console.log(`The round Id passed to the service is: ${id}`);
+    const round = await this.roundRepository.findOne({
+      where: { roundId: id },
+      relations: ['event'],
+    });
+    const athletes = await this.athleteRepository.find({
+      where: { events: { eventId: round.event.eventId } },
+    });
+    return athletes;
   }
 
   async deleteAthlete(id: string): Promise<ApiResponse<any>> {

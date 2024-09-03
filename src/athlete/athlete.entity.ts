@@ -1,3 +1,4 @@
+import { AthleteHeat } from 'src/athlete-heat/athlete-heat.entity';
 import {
   Column,
   Entity,
@@ -5,6 +6,7 @@ import {
   JoinTable,
   ManyToMany,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Accommodation } from '../accommodation/accommodation.entity';
@@ -70,6 +72,9 @@ export class Athlete extends BaseEntity {
   @JoinColumn({ name: 'accommodationId' })
   accommodation: Accommodation;
 
+  @Column({ nullable: true })
+  bedNumber: number;
+
   @ManyToMany(() => Event, (event) => event.athletes)
   @JoinTable({
     name: 'athlete_events',
@@ -89,4 +94,7 @@ export class Athlete extends BaseEntity {
 
   @Column({ nullable: true })
   otpExpiry: Date;
+
+  @OneToMany(() => AthleteHeat, (athleteHeat) => athleteHeat.athlete)
+  athleteHeats: AthleteHeat[];
 }

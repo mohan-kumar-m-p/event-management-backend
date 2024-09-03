@@ -50,6 +50,9 @@ export class Manager extends BaseEntity {
   accommodation: Accommodation;
 
   @Column({ nullable: true })
+  bedNumber: number;
+
+  @Column({ nullable: true })
   otp: string;
 
   @Column({ type: 'timestamp', nullable: true })

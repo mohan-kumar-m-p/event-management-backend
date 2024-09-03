@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsDate } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class UpdateManagerDto {
   @IsNotEmpty()
@@ -10,8 +10,8 @@ export class UpdateManagerDto {
   affiliationNumber: string;
 
   @IsNotEmpty()
-  @IsDate()
-  dob: Date;
+  @IsString()
+  dob: string;
 
   @IsNotEmpty()
   @IsString()
