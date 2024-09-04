@@ -1,8 +1,9 @@
-import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { ApiResponse } from 'src/shared/dto/api-response.dto';
-import { SchoolService } from './school.service';
 import { TransportDetailsDto } from './dto/transport-details.dto';
 import { School } from './school.entity';
+import { SchoolService } from './school.service';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('school')
