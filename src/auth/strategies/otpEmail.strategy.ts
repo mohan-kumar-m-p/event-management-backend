@@ -31,7 +31,7 @@ export class OtpEmailStrategy extends PassportStrategy(Strategy, 'otp-email') {
     }
 
     const { entity, email, otp } = loginEmailDto;
-    const user = await this.authService.validateOtpPhone(
+    const user = await this.authService.validateOtpEmail(
       entity,
       email,
       otp,

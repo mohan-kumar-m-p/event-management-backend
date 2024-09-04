@@ -30,7 +30,7 @@ export class AuthController {
     }
   }
 
-  @Post('organizer/logout')
+  @Post('logout')
   async logout(@Res({ passthrough: true }) response: Response) {
     response.clearCookie('access_token');
     return ApiResponse.success('Logout Successful');
@@ -52,7 +52,7 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ): Promise<ApiResponse<any>> {
     try {
-      const { access_token } = this.authService.otpLogin(
+      const { access_token } = this.authService.otpPhoneLogin(
         authenticated.user,
       );
       response.cookie('access_token', access_token, {
@@ -73,6 +73,27 @@ export class AuthController {
     const { entity, email } = otpPhoneDto;
     await this.authService.generateOtpEmail(entity, email);
     return ApiResponse.success('OTP generated successfully');
+  }
+
+  @UseGuards(AuthGuard('otp-email'))
+  @Post('otp/login-email')
+  async otpEmailLogin(
+    @Req() authenticated,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<ApiResponse<any>> {
+    try {
+      const { access_token } = this.authService.otpEmailLogin(
+        authenticated.user,
+      );
+      response.cookie('access_token', access_token, {
+        httpOnly: true,
+        secure: false,
+      });
+      return ApiResponse.success('Login Successful', authenticated.user);
+    } catch (error) {
+      console.log(`Error occured during user login: ${error}`);
+      throw error;
+    }
   }
 
 }

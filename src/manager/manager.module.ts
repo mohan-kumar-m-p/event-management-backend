@@ -1,13 +1,17 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ManagerService } from './manager.service';
+import { SharedModule } from 'src/shared/shared.module';
+import { Accommodation } from '../accommodation/accommodation.entity';
+import { School } from '../school/school.entity';
 import { ManagerController } from './manager.controller';
 import { Manager } from './manager.entity';
-import { School } from 'src/school/school.entity';
-import { Accommodation } from 'src/accommodation/accommodation.entity';
+import { ManagerService } from './manager.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Manager, School, Accommodation])],
+  imports: [
+    TypeOrmModule.forFeature([Manager, School, Accommodation]),
+    SharedModule,
+  ],
   controllers: [ManagerController],
   providers: [ManagerService],
   exports: [ManagerService],

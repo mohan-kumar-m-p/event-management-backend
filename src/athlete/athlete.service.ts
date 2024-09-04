@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -9,16 +10,18 @@ import { EventCategory } from '../event/enums/event-category.enum';
 import { EventSportGroup } from '../event/enums/event-sport-group.enum';
 import { EventType } from '../event/enums/event-type.enum';
 import { Event } from '../event/event.entity';
+import { Round } from '../round/round.entity';
 import { School } from '../school/school.entity';
 import { ApiResponse } from '../shared/dto/api-response.dto';
+import { S3Service } from '../shared/services/s3.service';
 import { calculateAge } from '../shared/utils/date-utils';
-import { CreateAthleteDto } from './dto/create-athlete.dto';
 import { Athlete } from './athlete.entity';
+import { CreateAthleteDto } from './dto/create-athlete.dto';
 import { UpdateAthleteDto } from './dto/update-athlete.dto';
-import { Round } from 'src/round/round.entity';
 
 @Injectable()
 export class AthleteService {
+  private readonly logger = new Logger(AthleteService.name);
   constructor(
     @InjectRepository(Athlete)
     private readonly athleteRepository: Repository<Athlete>,
@@ -28,11 +31,13 @@ export class AthleteService {
     private readonly eventRepository: Repository<Event>,
     @InjectRepository(Round)
     private readonly roundRepository: Repository<Round>,
+    private readonly s3Service: S3Service,
   ) {}
 
   async createAthlete(
     athleteDto: CreateAthleteDto,
     schoolAffiliationNumber: string,
+    photo?: Express.Multer.File,
   ): Promise<Athlete> {
     const affiliationNumber =
       athleteDto.affiliationNumber || schoolAffiliationNumber;
@@ -52,12 +57,18 @@ export class AthleteService {
     // Generate chestNumber from aadhaarNumber (last 5 digits)
     const chestNumber = athleteDto.aadhaarNumber.slice(-5);
 
+    let s3Data = null;
+    if (photo) {
+      s3Data = await this.s3Service.uploadFile(photo, 'athlete');
+    }
+
     // Create the athlete entity
     const athlete = this.athleteRepository.create({
       ...athleteDto,
       chestNumber,
       mealsRemaining: 5,
       school: school,
+      photoUrl: s3Data?.fileKey || null,
     });
 
     await this.athleteRepository.save(athlete);
@@ -97,7 +108,7 @@ export class AthleteService {
     return result;
   }
 
-  async findOne(id: string): Promise<Athlete> {
+  async findOne(id: string): Promise<any> {
     const athlete = await this.athleteRepository.findOne({
       where: { registrationId: id },
       relations: ['school', 'accommodation'],
@@ -105,7 +116,7 @@ export class AthleteService {
     if (!athlete) {
       throw new NotFoundException(`Athlete with ID ${id} not found`);
     }
-    const result = {
+    const result: Record<string, any> = {
       ...athlete,
       affiliationNumber: athlete.school.affiliationNumber,
       schoolName: athlete.school.name,
@@ -113,6 +124,25 @@ export class AthleteService {
       accommodationName: athlete.accommodation?.name || null,
       blockName: athlete.accommodation?.block.name || null,
     };
+
+    if (athlete.photoUrl) {
+      try {
+        const bucketName = process.env.S3_BUCKET_NAME;
+        const fileData = await this.s3Service.getFile(
+          bucketName,
+          athlete.photoUrl,
+        );
+        const base64Image = fileData.Body.toString('base64');
+        result.photo = `data:${fileData.ContentType};base64,${base64Image}`;
+      } catch (error) {
+        this.logger.error(
+          `Error occurred while retrieving athlete's photo from S3: ${error.message}`,
+        );
+        result.photo = null;
+      }
+    } else {
+      result.photo = null; // No photoUrl in DB
+    }
 
     delete result.school;
     delete result.accommodation;
@@ -150,6 +180,7 @@ export class AthleteService {
   async updateAthlete(
     id: string,
     athleteDto: UpdateAthleteDto,
+    photo?: Express.Multer.File,
   ): Promise<Athlete> {
     const existingAthlete = await this.findOne(id);
     if (!existingAthlete) {
@@ -176,10 +207,24 @@ export class AthleteService {
 
       existingAthlete.school = school;
     }
+
+     // Handle photo updates
+  if (photo) {
+    // If the existing athlete had a photo, delete the old photo from S3
+    if (existingAthlete.photoUrl) {
+      await this.s3Service.deleteFile(process.env.S3_BUCKET_NAME, existingAthlete.photoUrl);
+    }
+
+    // Upload the new photo to S3 and update the photoUrl
+    const uploadedFile = await this.s3Service.uploadFile(photo, 'athlete');
+    existingAthlete.photoUrl = uploadedFile.fileKey;
+  }
+
     const result = {
       ...existingAthlete,
       affiliationNumber: existingAthlete.school.affiliationNumber,
       accommodationId: existingAthlete.accommodation?.accommodationId || null,
+      photoUrl: existingAthlete.photoUrl,
     };
     delete result.school;
     delete result.accommodation;
