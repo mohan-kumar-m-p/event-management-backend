@@ -52,9 +52,9 @@ export class Coach extends BaseEntity {
   @Column({ nullable: true })
   bedNumber: number;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ nullable: true })
   otp: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   otpExpiry: Date;
 }

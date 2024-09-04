@@ -89,10 +89,10 @@ export class Athlete extends BaseEntity {
   })
   events: Event[];
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ nullable: true })
   otp: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   otpExpiry: Date;
 
   @OneToMany(() => AthleteHeat, (athleteHeat) => athleteHeat.athlete)

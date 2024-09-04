@@ -1,28 +1,33 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { School } from 'src/school/school.entity';
-import { ApiResponse } from 'src/shared/dto/api-response.dto';
 import { Repository } from 'typeorm';
+import { School } from '../school/school.entity';
+import { ApiResponse } from '../shared/dto/api-response.dto';
+import { S3Service } from '../shared/services/s3.service';
+import { Coach } from './coach.entity';
 import { CreateCoachDto } from './dto/create-coach.dto';
 import { UpdateCoachDto } from './dto/update-coach.dto';
-import { Coach } from './coach.entity';
 
 @Injectable()
 export class CoachService {
+  private logger = new Logger(CoachService.name);
   constructor(
     @InjectRepository(Coach)
     private readonly coachRepository: Repository<Coach>,
     @InjectRepository(School) // Inject the SchoolRepository to find the school
     private readonly schoolRepository: Repository<School>,
+    private readonly s3Service: S3Service,
   ) {}
 
   async createCoach(
     coachDto: CreateCoachDto,
     schoolAffiliationNumber: string,
+    photo?: Express.Multer.File,
   ): Promise<Coach> {
     const affiliationNumber =
       coachDto.affiliationNumber || schoolAffiliationNumber;
@@ -39,11 +44,17 @@ export class CoachService {
       throw new NotFoundException('School not found');
     }
 
+    let s3Data = null;
+    if (photo) {
+      s3Data = await this.s3Service.uploadFile(photo, 'coach');
+    }
+
     // Prepare the coach entity
     const coach = this.coachRepository.create({
       ...coachDto,
       mealsRemaining: 5,
       school: school,
+      photoUrl: s3Data?.fileKey || null,
     });
 
     await this.coachRepository.save(coach);
@@ -83,7 +94,7 @@ export class CoachService {
     return result;
   }
 
-  async findOne(id: string): Promise<Coach> {
+  async findOne(id: string): Promise<any> {
     const coach = await this.coachRepository.findOne({
       where: { coachId: id },
       relations: ['school', 'accommodation'],
@@ -92,7 +103,7 @@ export class CoachService {
       throw new NotFoundException(`Coach with ID ${id} not found`);
     }
 
-    const result = {
+    const result: Record<string, any> = {
       ...coach,
       affiliationNumber: coach.school.affiliationNumber,
       schoolName: coach.school.name,
@@ -101,12 +112,35 @@ export class CoachService {
       blockName: coach.accommodation?.block.name || null,
     };
 
+    if (coach.photoUrl) {
+      try {
+        const bucketName = process.env.S3_BUCKET_NAME;
+        const fileData = await this.s3Service.getFile(
+          bucketName,
+          coach.photoUrl,
+        );
+        const base64Image = fileData.Body.toString('base64');
+        result.photo = `data:${fileData.ContentType};base64,${base64Image}`;
+      } catch (error) {
+        this.logger.error(
+          `Error occurred while retrieving coach's photo from S3: ${error.message}`,
+        );
+        result.photo = null;
+      }
+    } else {
+      result.photo = null; // No photoUrl in DB
+    }
+
     delete result.school;
     delete result.accommodation;
     return result;
   }
 
-  async updateCoach(id: string, coachDto: UpdateCoachDto): Promise<Coach> {
+  async updateCoach(
+    id: string,
+    coachDto: UpdateCoachDto,
+    photo?: Express.Multer.File,
+  ): Promise<Coach> {
     // Fetch the existing coach from the database
     const existingCoach = await this.findOne(id);
     if (!existingCoach) {
@@ -135,10 +169,28 @@ export class CoachService {
 
       existingCoach.school = school;
     }
+
+    // Handle photo updates
+    if (photo) {
+      // If the existing coach had a photo, delete the old photo from S3
+      if (existingCoach.photoUrl) {
+        await this.s3Service.deleteFile(
+          process.env.S3_BUCKET_NAME,
+          existingCoach.photoUrl,
+        );
+      }
+
+      // Upload the new photo to S3 and update the photoUrl
+      const uploadedFile = await this.s3Service.uploadFile(photo, 'coach');
+      existingCoach.photoUrl = uploadedFile.fileKey;
+    }
+
     const result = {
       ...existingCoach,
       affiliationNumber: existingCoach.school.affiliationNumber,
       accommodationId: existingCoach.accommodation?.accommodationId || null,
+      photoUrl: existingCoach.photoUrl || null,
+
     };
     delete result.school;
     delete result.accommodation;

@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -11,19 +12,23 @@ import { CreateManagerDto } from './dto/create-manager.dto';
 import { UpdateManagerDto } from './dto/update-manager.dto';
 
 import { Manager } from './manager.entity';
+import { S3Service } from 'src/shared/services/s3.service';
 
 @Injectable()
 export class ManagerService {
+  private readonly logger = new Logger(ManagerService.name);
   constructor(
     @InjectRepository(Manager)
     private readonly managerRepository: Repository<Manager>,
     @InjectRepository(School) // Inject the SchoolRepository to find the school
     private readonly schoolRepository: Repository<School>,
+    private readonly s3Service: S3Service,
   ) {}
 
   async createManager(
     managerDto: CreateManagerDto,
     schoolAffiliationNumber: string,
+    photo?: Express.Multer.File,
   ): Promise<Manager> {
     const affiliationNumber =
       managerDto.affiliationNumber || schoolAffiliationNumber;
@@ -40,11 +45,16 @@ export class ManagerService {
       throw new NotFoundException('School not found');
     }
 
+    let s3Data = null;
+    if (photo) {
+      s3Data = await this.s3Service.uploadFile(photo, 'manager');
+    }
     // Prepare the manager entity
     const manager = this.managerRepository.create({
       ...managerDto,
       mealsRemaining: 5,
       school: school,
+      photoUrl: s3Data?.fileKey || null,
     });
 
     await this.managerRepository.save(manager);
@@ -82,14 +92,15 @@ export class ManagerService {
     return result;
   }
 
-  async findOne(id: string): Promise<Manager> {
+  async findOne(id: string): Promise<any> {
     const manager = await this.managerRepository.findOne({
       where: { managerId: id },
+      relations: ['school', 'accommodation'],
     });
     if (!manager) {
       throw new NotFoundException(`Manager with ID ${id} not found`);
     }
-    const result = {
+    const result: Record<string, any> = {
       ...manager,
       affiliationNumber: manager.school.affiliationNumber,
       schoolName: manager.school.name,
@@ -97,6 +108,26 @@ export class ManagerService {
       accommodationName: manager.accommodation?.name || null,
       blockName: manager.accommodation?.block.name || null,
     };
+
+    if (manager.photoUrl) {
+      try {
+        const bucketName = process.env.S3_BUCKET_NAME;
+        const fileData = await this.s3Service.getFile(
+          bucketName,
+          manager.photoUrl,
+        );
+        const base64Image = fileData.Body.toString('base64');
+        result.photo = `data:${fileData.ContentType};base64,${base64Image}`;
+      } catch (error) {
+        this.logger.error(
+          `Error occurred while retrieving manager's photo from S3: ${error.message}`,
+        );
+        result.photo = null;
+      }
+    } else {
+      result.photo = null; // No photoUrl in DB
+    }
+
     delete result.school;
     delete result.accommodation;
     return result;
@@ -105,6 +136,7 @@ export class ManagerService {
   async updateManager(
     id: string,
     managerDto: UpdateManagerDto,
+    photo?: Express.Multer.File,
   ): Promise<Manager> {
     // Fetch the existing manager from the database
     const existingManager = await this.findOne(id);
@@ -135,10 +167,26 @@ export class ManagerService {
       existingManager.school = school;
     }
 
+    // Handle photo updates
+    if (photo) {
+      // If the existing manager had a photo, delete the old photo from S3
+      if (existingManager.photoUrl) {
+        await this.s3Service.deleteFile(
+          process.env.S3_BUCKET_NAME,
+          existingManager.photoUrl,
+        );
+      }
+
+      // Upload the new photo to S3 and update the photoUrl
+      const uploadedFile = await this.s3Service.uploadFile(photo, 'manager');
+      existingManager.photoUrl = uploadedFile.fileKey;
+    }
+
     try {
+      // Save the updated manager entity
       return this.managerRepository.save(existingManager);
     } catch (error) {
-      throw new BadRequestException('Failed to update athlete');
+      throw new BadRequestException('Failed to update manager');
     }
   }
 

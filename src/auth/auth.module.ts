@@ -8,7 +8,7 @@ import { Organizer } from '../organizer/organizer.entity';
 import { OrganizerService } from '../organizer/organizer.service';
 import { School } from '../school/school.entity';
 import { EmailService } from '../shared/services/email.service';
-import { SmsService } from '../shared/services/sms.service';
+import { SharedModule } from '../shared/shared.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
@@ -23,6 +23,7 @@ import { jwtConstants } from './utils/constants';
       secret: jwtConstants.secret,
     }),
     TypeOrmModule.forFeature([Organizer, School, Manager, Coach, Athlete]),
+    SharedModule,
   ],
   controllers: [AuthController],
   providers: [
@@ -33,7 +34,6 @@ import { jwtConstants } from './utils/constants';
     OtpPhoneStrategy,
     EmailService,
     OtpEmailStrategy,
-    SmsService,
   ],
 })
 export class AuthModule {}

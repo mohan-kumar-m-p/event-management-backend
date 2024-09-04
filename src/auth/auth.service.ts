@@ -225,7 +225,9 @@ export class AuthService {
     }
   }
 
-  otpLogin(authenticatedUser: Record<string, string>): Record<string, string> {
+  otpPhoneLogin(
+    authenticatedUser: Record<string, string>,
+  ): Record<string, string> {
     const jwtPaylod: any = {
       sub: authenticatedUser.id,
       affiliationNumber: authenticatedUser.affiliationNumber,
@@ -245,7 +247,7 @@ export class AuthService {
 
         if (!school) {
           throw new UnauthorizedException(
-            `Manager with phone number ${email} not found`,
+            `School with phone number ${email} not found`,
           );
         }
 
@@ -297,10 +299,21 @@ export class AuthService {
         school.otpExpiry = null;
         await this.schoolRepository.save(school);
         return school;
-      }
+      } else throw new BadRequestException('Invalid entity');
     } catch (error) {
       this.logger.error(`Error occurred while validating OTP email, ${error}`);
       throw error;
     }
+  }
+
+  otpEmailLogin(
+    authenticatedUser: Record<string, string>,
+  ): Record<string, string> {
+    const jwtPaylod: any = {
+      sub: authenticatedUser.affiliationNumber,
+    };
+    return {
+      access_token: this.jwtService.sign(jwtPaylod),
+    };
   }
 }

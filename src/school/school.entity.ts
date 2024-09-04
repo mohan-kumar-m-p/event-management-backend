@@ -42,10 +42,10 @@ export class School extends BaseEntity {
   @OneToMany(() => Coach, (coach) => coach.school)
   coaches: Coach[];
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ nullable: true })
   otp: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   otpExpiry: Date;
 
   @Column({ nullable: true })

@@ -7,14 +7,17 @@ import {
   Param,
   Post,
   Put,
+  Request,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiResponse } from '../shared/dto/api-response.dto';
 import { AthleteService } from './athlete.service';
 import { CreateAthleteDto } from './dto/create-athlete.dto';
 import { UpdateAthleteDto } from './dto/update-athlete.dto';
-import { Request } from '@nestjs/common';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('athlete')
@@ -22,14 +25,17 @@ export class AthleteController {
   constructor(private readonly athleteService: AthleteService) {}
 
   @Post()
+  @UseInterceptors(FileInterceptor('photo'))
   async create(
     @Body() athleteDto: CreateAthleteDto,
+    @UploadedFile() photo: Express.Multer.File,
     @Request() req,
   ): Promise<ApiResponse<any>> {
     const schoolAffiliationNumber = req?.user?.entity || null;
     const athlete = await this.athleteService.createAthlete(
       athleteDto,
       schoolAffiliationNumber,
+      photo,
     );
     return ApiResponse.success(
       'Athlete created successfully',
@@ -51,13 +57,16 @@ export class AthleteController {
   }
 
   @Put(':id')
+  @UseInterceptors(FileInterceptor('photo'))
   async update(
     @Param('id') id: string,
     @Body() athleteDto: UpdateAthleteDto,
+    @UploadedFile() photo: Express.Multer.File,
   ): Promise<ApiResponse<any>> {
     const updatedAthlete = await this.athleteService.updateAthlete(
       id,
       athleteDto,
+      photo,
     );
     return ApiResponse.success('Athlete updated successfully', updatedAthlete);
   }

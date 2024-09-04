@@ -1,6 +1,7 @@
 import { MailerModule } from '@nestjs-modules/mailer';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import * as AWS from 'aws-sdk';
 import { AccommodationModule } from './accommodation/accommodation.module';
 import { AthleteModule } from './athlete/athlete.module';
@@ -14,12 +15,14 @@ import { MealModule } from './meal/meal.module';
 import { OrganizerModule } from './organizer/organizer.module';
 import { RoundModule } from './round/round.module';
 import { SchoolModule } from './school/school.module';
+import { SharedModule } from './shared/shared.module';
 import { WildcardController } from './wildcard.controller';
 import { HeatModule } from './heat/heat.module';
 import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true, // Makes ConfigModule available throughout the app
     }),
@@ -36,7 +39,6 @@ import { PaymentModule } from './payment/payment.module';
         from: process.env.FROM_EMAIL_ADDRESS,
       },
     }),
-
     DatabaseModule,
     AthleteModule,
     ManagerModule,
@@ -51,6 +53,7 @@ import { PaymentModule } from './payment/payment.module';
     AuthModule,
     OrganizerModule,
     PaymentModule,
+    SharedModule,
   ],
   controllers: [WildcardController],
 })
