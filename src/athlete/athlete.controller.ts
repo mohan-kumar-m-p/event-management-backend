@@ -31,7 +31,9 @@ export class AthleteController {
     @UploadedFile() photo: Express.Multer.File,
     @Request() req,
   ): Promise<ApiResponse<any>> {
-    const schoolAffiliationNumber = req?.user?.entity || null;
+    const schoolAffiliationNumber = athleteDto.affiliationNumber
+      ? athleteDto.affiliationNumber
+      : req?.user?.sub;
     const athlete = await this.athleteService.createAthlete(
       athleteDto,
       schoolAffiliationNumber,

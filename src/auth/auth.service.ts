@@ -145,6 +145,7 @@ export class AuthService {
       if (entity === Entity.Manager) {
         const manager: Record<string, any> = await this.managerRepository.findOne({
           where: { phone: phoneNumber },
+          relations: ['school'],
         });
 
         if (!manager) {
@@ -171,6 +172,7 @@ export class AuthService {
       } else if (entity === Entity.Coach) {
         const coach: Record<string, any> = await this.coachRepository.findOne({
           where: { phone: phoneNumber },
+          relations: ['school'],
         });
 
         if (!coach) {
@@ -198,6 +200,7 @@ export class AuthService {
       } else if (entity === Entity.Athlete) {
         const athlete: Record<string, any> = await this.athleteRepository.findOne({
           where: { phone: phoneNumber },
+          relations: ['school'],
         });
 
         if (!athlete) {
@@ -231,7 +234,7 @@ export class AuthService {
   }
 
   otpPhoneLogin(
-    authenticatedUser: Record<string, string>,
+    authenticatedUser: Record<string, any>,
   ): Record<string, string> {
     const primaryKeyMap  = {
       [Entity.Manager]: 'managerId',
@@ -240,8 +243,9 @@ export class AuthService {
     }
     const jwtPaylod: any = {
       sub: authenticatedUser[primaryKeyMap[authenticatedUser.entity]],
-      affiliationNumber: authenticatedUser.affiliationNumber,
+      affiliationNumber: authenticatedUser.school.affiliationNumber
     };
+    
     return {
       access_token: this.jwtService.sign(jwtPaylod),
     };

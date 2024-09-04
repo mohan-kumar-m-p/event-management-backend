@@ -7,17 +7,17 @@ import {
   Param,
   Post,
   Put,
+  Request,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiResponse } from '../shared/dto/api-response.dto';
+import { CoachService } from './coach.service';
 import { CreateCoachDto } from './dto/create-coach.dto';
 import { UpdateCoachDto } from './dto/update-coach.dto';
-import { CoachService } from './coach.service';
-import { Request } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('coach')
@@ -31,7 +31,10 @@ export class CoachController {
     @UploadedFile() photo: Express.Multer.File,
     @Request() req,
   ): Promise<ApiResponse<any>> {
-    const schoolAffiliationNumber = req?.user?.entity || null;
+    const schoolAffiliationNumber = coachDto.affiliationNumber
+      ? coachDto.affiliationNumber
+      : req?.user?.sub;
+
     const coach = await this.coachService.createCoach(
       coachDto,
       schoolAffiliationNumber,
@@ -66,7 +69,11 @@ export class CoachController {
     @Body() coachDto: UpdateCoachDto,
     @UploadedFile() photo: Express.Multer.File,
   ): Promise<ApiResponse<any>> {
-    const updatedCoach = await this.coachService.updateCoach(id, coachDto, photo);
+    const updatedCoach = await this.coachService.updateCoach(
+      id,
+      coachDto,
+      photo,
+    );
     return ApiResponse.success(
       `Coach with ID ${id} updated successfully`,
       updatedCoach,

@@ -53,7 +53,7 @@ export class Athlete extends BaseEntity {
   @Column()
   class: string;
 
-  @Column()
+  @Column({ nullable: true })
   admissionNumber: string;
 
   @Column({ type: 'int', default: 5 })

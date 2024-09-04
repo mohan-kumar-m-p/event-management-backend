@@ -31,7 +31,10 @@ export class ManagerController {
     @UploadedFile() photo: Express.Multer.File,
     @Request() req,
   ): Promise<ApiResponse<any>> {
-    const schoolAffiliationNumber = req?.user?.entity || null;
+    const schoolAffiliationNumber = managerDto.affiliationNumber
+      ? managerDto.affiliationNumber
+      : req?.user?.sub;
+
     const manager = await this.managerService.createManager(
       managerDto,
       schoolAffiliationNumber,

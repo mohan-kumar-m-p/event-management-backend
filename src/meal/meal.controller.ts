@@ -1,14 +1,15 @@
 import {
+  Body,
   Controller,
   NotFoundException,
   Post,
   Query,
+  Request,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiResponse } from 'src/shared/dto/api-response.dto';
 import { MealService } from './meal.service';
-import { Request } from '@nestjs/common';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('meal')
@@ -16,10 +17,16 @@ export class MealController {
   constructor(private readonly mealService: MealService) {}
 
   @Post('generate-qr-code')
-  async generateQrCode(@Request() req): Promise<ApiResponse<any>> {
+  async generateQrCode(
+    @Request() req,
+    @Body() body?,
+  ): Promise<ApiResponse<any>> {
+    const schoolAffiliationNumber = body?.affiliationNumber
+      ? body.affiliationNumber
+      : req?.user?.affiliationNumber;
     const qrCode = await this.mealService.generateQRCode(
       req.user.sub,
-      req.user.entity,
+      schoolAffiliationNumber,
     );
     return ApiResponse.success('QR Code generated successfully', qrCode);
   }
