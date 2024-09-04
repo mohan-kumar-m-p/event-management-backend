@@ -15,4 +15,12 @@ export class HeatController {
     const heats = await this.heatService.generateQualifierHeats(roundId);
     return ApiResponse.success('Qualifier heats generated successfully', heats);
   }
+
+  @Post(':roundId/generate-semifinal-heats')
+  async generateSemiFinalHeats(
+    @Param('roundId') roundId: string,
+  ): Promise<ApiResponse<any>> {
+    const heats = await this.heatService.generateSemifinalHeats(roundId);
+    return ApiResponse.success('Qualifier heats generated successfully', heats);
+  }
 }
