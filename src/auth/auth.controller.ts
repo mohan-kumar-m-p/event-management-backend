@@ -68,9 +68,9 @@ export class AuthController {
 
   @Post('otp/generate-email-otp')
   async generateEmailOTP(
-    @Body() otpPhoneDto: OtpEmailDto,
+    @Body() otpEmailDto: OtpEmailDto,
   ): Promise<ApiResponse<any>> {
-    const { entity, email } = otpPhoneDto;
+    const { entity, email } = otpEmailDto;
     await this.authService.generateOtpEmail(entity, email);
     return ApiResponse.success('OTP generated successfully');
   }
