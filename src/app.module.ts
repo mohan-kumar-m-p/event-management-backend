@@ -19,6 +19,7 @@ import { SharedModule } from './shared/shared.module';
 import { WildcardController } from './wildcard.controller';
 import { HeatModule } from './heat/heat.module';
 import { PaymentModule } from './payment/payment.module';
+import { AthleteHeatModule } from './athlete-heat/athlete-heat.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { PaymentModule } from './payment/payment.module';
     OrganizerModule,
     PaymentModule,
     SharedModule,
+    AthleteHeatModule,
   ],
   controllers: [WildcardController],
 })

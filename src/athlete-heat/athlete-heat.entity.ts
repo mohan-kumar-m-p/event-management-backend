@@ -1,4 +1,10 @@
-import { Entity, ManyToOne, PrimaryGeneratedColumn, Column } from 'typeorm';
+import {
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  Column,
+  JoinColumn,
+} from 'typeorm';
 import { Athlete } from '../athlete/athlete.entity';
 import { Heat } from '../heat/heat.entity';
 
@@ -8,9 +14,11 @@ export class AthleteHeat {
   id: string;
 
   @ManyToOne(() => Athlete, (athlete) => athlete.athleteHeats)
+  @JoinColumn({ name: 'registrationId' })
   athlete: Athlete;
 
   @ManyToOne(() => Heat, (heat) => heat.athleteHeats)
+  @JoinColumn({ name: 'heatId' })
   heat: Heat;
 
   @Column()
