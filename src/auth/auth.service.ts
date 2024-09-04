@@ -106,6 +106,7 @@ export class AuthService {
           );
         }
 
+        this.smsService.sendOtp(phoneNumber, otp);
         coach.otp = otp;
         coach.otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
         await this.coachRepository.save(coach);
@@ -120,6 +121,7 @@ export class AuthService {
           );
         }
 
+        this.smsService.sendOtp(phoneNumber, otp);
         athlete.otp = otp;
         athlete.otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
         await this.athleteRepository.save(athlete);
