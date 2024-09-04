@@ -72,7 +72,9 @@ export class ManagerService {
   }
 
   async findAll(): Promise<Manager[]> {
-    const managers = await this.managerRepository.find();
+    const managers = await this.managerRepository.find({
+      relations: ['school', 'accommodation'],
+    });
     if (!managers) {
       throw new NotFoundException('No managers found');
     }
