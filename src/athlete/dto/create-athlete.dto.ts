@@ -41,7 +41,7 @@ export class CreateAthleteDto {
   @IsString()
   class: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   admissionNumber: string;
 }
