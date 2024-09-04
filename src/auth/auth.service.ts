@@ -141,7 +141,7 @@ export class AuthService {
     try {
       let generatedOtp = null;
       if (entity === Entity.Manager) {
-        const manager = await this.managerRepository.findOne({
+        const manager: Record<string, any> = await this.managerRepository.findOne({
           where: { phone: phoneNumber },
         });
 
@@ -164,9 +164,10 @@ export class AuthService {
         manager.otp = null;
         manager.otpExpiry = null;
         await this.managerRepository.save(manager);
-        return manager;
+        manager.entity = Entity.Manager;
+        return manager
       } else if (entity === Entity.Coach) {
-        const coach = await this.coachRepository.findOne({
+        const coach: Record<string, any> = await this.coachRepository.findOne({
           where: { phone: phoneNumber },
         });
 
@@ -190,9 +191,10 @@ export class AuthService {
         coach.otp = null;
         coach.otpExpiry = null;
         await this.coachRepository.save(coach);
-        return coach;
+        coach.entity = Entity.Coach;
+        return coach
       } else if (entity === Entity.Athlete) {
-        const athlete = await this.athleteRepository.findOne({
+        const athlete: Record<string, any> = await this.athleteRepository.findOne({
           where: { phone: phoneNumber },
         });
 
@@ -215,7 +217,8 @@ export class AuthService {
         athlete.otp = null;
         athlete.otpExpiry = null;
         await this.athleteRepository.save(athlete);
-        return athlete;
+        athlete.entity = Entity.Athlete;
+        return athlete
       } else {
         throw new BadRequestException('Invalid entity');
       }
@@ -228,8 +231,13 @@ export class AuthService {
   otpPhoneLogin(
     authenticatedUser: Record<string, string>,
   ): Record<string, string> {
+    const primaryKeyMap  = {
+      [Entity.Manager]: 'managerId',
+      [Entity.Coach]: 'coachId',
+      [Entity.Athlete]: 'registrationId',
+    }
     const jwtPaylod: any = {
-      sub: authenticatedUser.id,
+      sub: authenticatedUser[primaryKeyMap[authenticatedUser.entity]],
       affiliationNumber: authenticatedUser.affiliationNumber,
     };
     return {
