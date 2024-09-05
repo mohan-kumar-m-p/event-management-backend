@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventType } from './enums/event-type.enum';
 import { Event } from './event.entity';
+import { EventSportGroup } from './enums/event-sport-group.enum';
 
 @Injectable()
 export class EventService {
@@ -12,7 +13,11 @@ export class EventService {
   ) {}
 
   async findAll(): Promise<Event[]> {
-    const events = await this.eventRepository.find();
+    const events = await this.eventRepository.find({
+      where: {
+        sportGroup: EventSportGroup.Swimming,
+      },
+    });
     if (!events) {
       throw new NotFoundException('No events found');
     }
@@ -31,7 +36,10 @@ export class EventService {
 
   async findIndividualEvents(): Promise<{ [key: string]: Event[] }> {
     const individualEvents = await this.eventRepository.find({
-      where: { type: EventType.Individual },
+      where: {
+        type: EventType.Individual,
+        sportGroup: EventSportGroup.Swimming,
+      },
     });
 
     if (!individualEvents || individualEvents.length === 0) {
@@ -55,7 +63,7 @@ export class EventService {
 
   async findGroupEvents(): Promise<{ [key: string]: Event[] }> {
     const groupEvents = await this.eventRepository.find({
-      where: { type: EventType.Group },
+      where: { type: EventType.Group, sportGroup: EventSportGroup.Swimming },
     });
 
     if (!groupEvents || groupEvents.length === 0) {

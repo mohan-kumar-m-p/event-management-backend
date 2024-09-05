@@ -197,11 +197,17 @@ export class AthleteService {
     }
 
     const events = await this.eventRepository.find({
-      where: { category: athleteGroup, gender: athlete.gender },
+      where: {
+        category: athleteGroup,
+        gender: athlete.gender,
+        sportGroup: EventSportGroup.Swimming,
+      },
     });
+
     if (!events || events.length === 0) {
       throw new NotFoundException('No events found');
     }
+
     // Group events by type
     const groupedEvents = events.reduce(
       (acc, event) => {
