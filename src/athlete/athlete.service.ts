@@ -132,6 +132,54 @@ export class AthleteService {
     return result;
   }
 
+  async findAllBySchool(schoolId: string): Promise<any[]> {
+    const athletes = await this.athleteRepository.find({
+      where: { school: { affiliationNumber: schoolId } },
+      relations: ['school', 'accommodation'],
+    });
+    if (!athletes) {
+      throw new NotFoundException('No athletes found');
+    }
+    const result = await Promise.all(
+      athletes.map(async (athlete) => {
+        const transformedAthlete: Record<string, any> = {
+          ...athlete,
+          affiliationNumber: athlete.school.affiliationNumber,
+          schoolName: athlete.school.name,
+          accommodationId: athlete.accommodation?.accommodationId || null,
+          accommodationName: athlete.accommodation?.name || null,
+          blockName: athlete.accommodation?.block.name || null,
+        };
+
+        if (athlete.photoUrl) {
+          try {
+            const bucketName = process.env.S3_BUCKET_NAME;
+            const fileData = await this.s3Service.getFile(
+              bucketName,
+              athlete.photoUrl,
+            );
+            const base64Image = fileData.Body.toString('base64');
+            transformedAthlete.photo = `data:${fileData.ContentType};base64,${base64Image}`;
+          } catch (error) {
+            this.logger.error(
+              `Error occurred while retrieving athlete's photo from S3: ${error.message}`,
+            );
+            transformedAthlete.photo = null;
+          }
+        } else {
+          transformedAthlete.photo = null; // No photoUrl in DB
+        }
+
+        delete transformedAthlete.school;
+        delete transformedAthlete.accommodation;
+
+        return transformedAthlete;
+      }),
+    );
+
+    return result;
+  }
+
   async findOne(id: string): Promise<any> {
     const athlete = await this.athleteRepository.findOne({
       where: { registrationId: id },
@@ -221,17 +269,28 @@ export class AthleteService {
     const schoolAthletes = await this.athleteRepository.find({
       where: {
         school: { affiliationNumber: athlete.school.affiliationNumber },
+        registrationId: Not(athlete.registrationId),
       },
       relations: ['events'],
     });
 
-    const registeredEventIds = schoolAthletes.flatMap((athlete) =>
-      athlete.events.map((event) => event.eventId),
-    );
+    const availableEvents = events.filter((event) => {
+      // Count how many athletes from the same school are registered for this event
+      const registeredAthleteCount = schoolAthletes.filter((schoolAthlete) =>
+        schoolAthlete.events.some((e) => e.eventId === event.eventId),
+      ).length;
 
-    const availableEvents = events.filter(
-      (event) => !registeredEventIds.includes(event.eventId),
-    );
+      if (event.type === EventType.Individual) {
+        // For individual events, exclude if any other athlete from the school is registered
+        return registeredAthleteCount === 0;
+      } else if (event.type === EventType.Group) {
+        // For group events, exclude if 5 or more athletes from the school are already registered
+        return registeredAthleteCount < 5;
+      }
+
+      // If the event type is neither Individual nor Group (shouldn't happen), exclude it
+      return false;
+    });
 
     if (availableEvents.length === 0) {
       throw new NotFoundException('No available events found');

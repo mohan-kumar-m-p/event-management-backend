@@ -52,6 +52,12 @@ export class AthleteController {
     return ApiResponse.success('Athletes retrieved successfully', athletes);
   }
 
+  @Get('school/:id')
+  async findAllBySchool(@Param('id') id: string): Promise<ApiResponse<any>> {
+    const athletes = await this.athleteService.findAllBySchool(id);
+    return ApiResponse.success('Athletes retrieved successfully', athletes);
+  }
+
   @Get(':id')
   async getAthlete(@Param('id') id: string): Promise<ApiResponse<any>> {
     const athlete = await this.athleteService.findOne(id);
