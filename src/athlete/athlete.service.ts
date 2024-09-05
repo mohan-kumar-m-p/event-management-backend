@@ -187,13 +187,13 @@ export class AthleteService {
     if (athleteAge > 19) {
       throw new BadRequestException('Athlete is not eligible');
     } else if (athleteAge < 11) {
-      athleteGroup = EventCategory.Under11;
+      athleteGroup = [EventCategory.Under11, EventCategory.Under14, EventCategory.Under17, EventCategory.Under19];
     } else if (athleteAge < 14) {
-      athleteGroup = EventCategory.Under14;
+      athleteGroup = [EventCategory.Under14, EventCategory.Under17, EventCategory.Under19];
     } else if (athleteAge < 17) {
-      athleteGroup = EventCategory.Under17;
+      athleteGroup = [EventCategory.Under17, EventCategory.Under19];
     } else if (athleteAge < 19) {
-      athleteGroup = EventCategory.Under19;
+      athleteGroup = [EventCategory.Under19];
     }
 
     const events = await this.eventRepository.find({
@@ -208,8 +208,26 @@ export class AthleteService {
       throw new NotFoundException('No events found');
     }
 
+    const schoolAthletes = await this.athleteRepository.find({
+      where: {
+        school: { affiliationNumber: athlete.school.affiliationNumber },
+      },
+      relations: ['events'],
+    });
+
+    const registeredEventIds = schoolAthletes
+  .flatMap(athlete => athlete.events.map(event => event.eventId));
+
+  const availableEvents = events.filter(
+    event => !registeredEventIds.includes(event.eventId),
+  );
+
+  if (availableEvents.length === 0) {
+    throw new NotFoundException('No available events found');
+  }
+
     // Group events by type
-    const groupedEvents = events.reduce(
+    const groupedEvents = availableEvents.reduce(
       (acc, event) => {
         if (event.type === EventType.Individual) {
           acc.individual.push(event);
