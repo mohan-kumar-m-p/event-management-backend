@@ -92,19 +92,43 @@ export class AthleteService {
     if (!athletes) {
       throw new NotFoundException('No athletes found');
     }
-    const result = athletes.map((athlete) => {
-      const transformedAthlete = {
-        ...athlete,
-        affiliationNumber: athlete.school.affiliationNumber,
-        schoolName: athlete.school.name,
-        accommodationId: athlete.accommodation?.accommodationId || null,
-        accommodationName: athlete.accommodation?.name || null,
-        blockName: athlete.accommodation?.block.name || null,
-      };
-      delete transformedAthlete.school;
-      delete transformedAthlete.accommodation;
-      return transformedAthlete;
-    });
+    const result = await Promise.all(
+      athletes.map(async (athlete) => {
+        const transformedAthlete: Record<string, any> = {
+          ...athlete,
+          affiliationNumber: athlete.school.affiliationNumber,
+          schoolName: athlete.school.name,
+          accommodationId: athlete.accommodation?.accommodationId || null,
+          accommodationName: athlete.accommodation?.name || null,
+          blockName: athlete.accommodation?.block.name || null,
+        };
+
+        if (athlete.photoUrl) {
+          try {
+            const bucketName = process.env.S3_BUCKET_NAME;
+            const fileData = await this.s3Service.getFile(
+              bucketName,
+              athlete.photoUrl,
+            );
+            const base64Image = fileData.Body.toString('base64');
+            transformedAthlete.photo = `data:${fileData.ContentType};base64,${base64Image}`;
+          } catch (error) {
+            this.logger.error(
+              `Error occurred while retrieving athlete's photo from S3: ${error.message}`,
+            );
+            transformedAthlete.photo = null;
+          }
+        } else {
+          transformedAthlete.photo = null; // No photoUrl in DB
+        }
+
+        delete transformedAthlete.school;
+        delete transformedAthlete.accommodation;
+
+        return transformedAthlete;
+      }),
+    );
+
     return result;
   }
 
@@ -149,7 +173,9 @@ export class AthleteService {
     return result;
   }
 
-  async findEligibleEvents(id: string): Promise<Event[]> {
+  async findEligibleEvents(
+    id: string,
+  ): Promise<{ individual: Event[]; group: Event[] }> {
     const athlete = await this.findOne(id);
 
     if (!athlete) {
@@ -160,6 +186,8 @@ export class AthleteService {
     let athleteGroup;
     if (athleteAge > 19) {
       throw new BadRequestException('Athlete is not eligible');
+    } else if (athleteAge < 11) {
+      athleteGroup = EventCategory.Under11;
     } else if (athleteAge < 14) {
       athleteGroup = EventCategory.Under14;
     } else if (athleteAge < 17) {
@@ -174,7 +202,30 @@ export class AthleteService {
     if (!events || events.length === 0) {
       throw new NotFoundException('No events found');
     }
-    return events;
+    // Group events by type
+    const groupedEvents = events.reduce(
+      (acc, event) => {
+        if (event.type === EventType.Individual) {
+          acc.individual.push(event);
+        } else if (event.type === EventType.Group) {
+          acc.group.push(event);
+        }
+        return acc;
+      },
+      { individual: [], group: [] },
+    );
+
+    // Check if both groups have events
+    if (
+      groupedEvents.individual.length === 0 &&
+      groupedEvents.group.length === 0
+    ) {
+      throw new NotFoundException(
+        'No events found for either individual or group categories',
+      );
+    }
+
+    return groupedEvents;
   }
 
   async updateAthlete(
