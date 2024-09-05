@@ -9,12 +9,12 @@ export class EmailService {
 
   async sendEmail(emailOptions: EmailOptions) {
     try {
-      await this.mailerService.sendMail({
+      const result = await this.mailerService.sendMail({
         to: emailOptions.to,
         subject: emailOptions.subject,
         html: emailOptions.body,
       });
-      this.logger.log(`Email sent to ${emailOptions.to}`);
+      this.logger.log(`Email sent to ${emailOptions.to}, MessageId: ${result.messageId}`);
     } catch (error) {
       throw error;
     }

@@ -8,6 +8,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomInt } from 'crypto';
+import { NodeMailerService } from 'src/shared/services/nodeMailer.service';
 import { Repository } from 'typeorm';
 import { Athlete } from '../athlete/athlete.entity';
 import { Coach } from '../coach/coach.entity';
@@ -36,6 +37,7 @@ export class AuthService {
     private athleteRepository: Repository<Athlete>,
     private emailService: EmailService,
     private smsService: SmsService,
+    private nodeMailService: NodeMailerService,
   ) {}
 
   async authenticateOrganizer(
@@ -143,10 +145,11 @@ export class AuthService {
     try {
       let generatedOtp = null;
       if (entity === Entity.Manager) {
-        const manager: Record<string, any> = await this.managerRepository.findOne({
-          where: { phone: phoneNumber },
-          relations: ['school'],
-        });
+        const manager: Record<string, any> =
+          await this.managerRepository.findOne({
+            where: { phone: phoneNumber },
+            relations: ['school'],
+          });
 
         if (!manager) {
           throw new NotFoundException(
@@ -168,7 +171,7 @@ export class AuthService {
         manager.otpExpiry = null;
         await this.managerRepository.save(manager);
         manager.entity = Entity.Manager;
-        return manager
+        return manager;
       } else if (entity === Entity.Coach) {
         const coach: Record<string, any> = await this.coachRepository.findOne({
           where: { phone: phoneNumber },
@@ -196,12 +199,13 @@ export class AuthService {
         coach.otpExpiry = null;
         await this.coachRepository.save(coach);
         coach.entity = Entity.Coach;
-        return coach
+        return coach;
       } else if (entity === Entity.Athlete) {
-        const athlete: Record<string, any> = await this.athleteRepository.findOne({
-          where: { phone: phoneNumber },
-          relations: ['school'],
-        });
+        const athlete: Record<string, any> =
+          await this.athleteRepository.findOne({
+            where: { phone: phoneNumber },
+            relations: ['school'],
+          });
 
         if (!athlete) {
           throw new NotFoundException(
@@ -223,7 +227,7 @@ export class AuthService {
         athlete.otpExpiry = null;
         await this.athleteRepository.save(athlete);
         athlete.entity = Entity.Athlete;
-        return athlete
+        return athlete;
       } else {
         throw new BadRequestException('Invalid entity');
       }
@@ -236,16 +240,16 @@ export class AuthService {
   otpPhoneLogin(
     authenticatedUser: Record<string, any>,
   ): Record<string, string> {
-    const primaryKeyMap  = {
+    const primaryKeyMap = {
       [Entity.Manager]: 'managerId',
       [Entity.Coach]: 'coachId',
       [Entity.Athlete]: 'registrationId',
-    }
+    };
     const jwtPaylod: any = {
       sub: authenticatedUser[primaryKeyMap[authenticatedUser.entity]],
-      affiliationNumber: authenticatedUser.school.affiliationNumber
+      affiliationNumber: authenticatedUser.school.affiliationNumber,
     };
-    
+
     return {
       access_token: this.jwtService.sign(jwtPaylod),
     };
@@ -267,11 +271,12 @@ export class AuthService {
 
         school.otp = otp;
         school.otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
-        await this.emailService.sendEmail({
-          to: school.emailId,
-          subject: 'OTP for Login',
-          body: `Your OTP for login is ${otp}`,
-        });
+        // await this.emailService.sendEmail({
+        //   to: school.emailId,
+        //   subject: 'OTP for Login',
+        //   body: `Your OTP for login is ${otp}`,
+        // });
+        await this.nodeMailService.sendEmail(school.emailId, otp);
         await this.schoolRepository.save(school);
         return;
       } else throw new BadRequestException('Invalid entity');
