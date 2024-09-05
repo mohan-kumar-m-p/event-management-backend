@@ -44,6 +44,9 @@ export class Event extends BaseEntity {
   @Column({ nullable: true })
   order: string;
 
+  @Column({ nullable: true })
+  date: Date;
+
   @ManyToMany(() => Athlete, (athlete) => athlete.events)
   athletes: Athlete[];
 

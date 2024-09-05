@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { In, Not, Repository } from 'typeorm';
 import { EventCategory } from '../event/enums/event-category.enum';
 import { EventSportGroup } from '../event/enums/event-sport-group.enum';
 import { EventType } from '../event/enums/event-type.enum';
@@ -391,6 +391,16 @@ export class AthleteService {
       );
     }
 
+    // Check if new events' category matches existing events' category
+    if (athlete.events.length > 0) {
+      const existingCategory = athlete.events[0].category;
+      if (existingCategory !== events[0].category) {
+        throw new BadRequestException(
+          `New events' age category (${events[0].category}) does not match existing events' age category (${existingCategory})`,
+        );
+      }
+    }
+
     const athleteAge = calculateAge(athlete.dob);
 
     // Fetch all athletes from the same school
@@ -512,6 +522,14 @@ export class AthleteService {
       maxSwimmingEvents = 5;
     }
 
+    const totalIndividualSwimming =
+      currentEvents.swimming.individual + newEvents.swimming.individual;
+    if (totalIndividualSwimming > maxSwimmingEvents) {
+      conflictingEvents.push(
+        `Swimmer cannot be registered for more than ${maxSwimmingEvents} individual swimming events in their age group. Current: ${currentEvents.swimming.individual}, New: ${newEvents.swimming.individual}, Total: ${totalIndividualSwimming}`,
+      );
+    }
+
     if (
       currentEvents.swimming.individual + newEvents.swimming.individual >
       maxSwimmingEvents
@@ -625,6 +643,117 @@ export class AthleteService {
         );
       }
       throw error; // Rethrow any other errors
+    }
+  }
+
+  async updateAthleteEvents(
+    athleteId: string,
+    eventIds: string[],
+  ): Promise<Athlete> {
+    const athlete = await this.athleteRepository.findOne({
+      where: { registrationId: athleteId },
+      relations: ['events', 'school'],
+    });
+
+    if (!athlete) {
+      throw new NotFoundException(`Athlete with ID ${athleteId} not found`);
+    }
+
+    if (!eventIds || eventIds.length === 0) {
+      throw new BadRequestException('No events provided');
+    }
+
+    const events = await this.eventRepository.findBy({
+      eventId: In(eventIds),
+    });
+
+    if (events.length !== eventIds.length) {
+      throw new NotFoundException('One or more events not found');
+    }
+
+    // Check if all events have the same category and gender
+    const categories = new Set(events.map((event) => event.category));
+    const genders = new Set(events.map((event) => event.gender));
+    if (
+      categories.size > 1 ||
+      genders.size > 1 ||
+      events[0].gender !== athlete.gender
+    ) {
+      throw new BadRequestException(
+        "Events must be from the same category and match the athlete's gender",
+      );
+    }
+
+    // Check if any event is already assigned to another athlete from the same school
+    const schoolAthletes = await this.athleteRepository.find({
+      where: {
+        school: { affiliationNumber: athlete.school.affiliationNumber },
+        registrationId: Not(athleteId),
+      },
+      relations: ['events'],
+    });
+
+    const conflictingEvents = [];
+
+    for (const event of events) {
+      if (event.type === EventType.Individual) {
+        // Check for individual events
+        const isAssigned = schoolAthletes.some((schoolAthlete) =>
+          schoolAthlete.events.some((e) => e.eventId === event.eventId),
+        );
+        if (isAssigned) {
+          conflictingEvents.push(
+            `${event.name} is already assigned to another athlete from your school`,
+          );
+        }
+      } else if (event.type === EventType.Group) {
+        // Check for group events
+        const athletesInEvent = schoolAthletes.filter((schoolAthlete) =>
+          schoolAthlete.events.some((e) => e.eventId === event.eventId),
+        ).length;
+        if (athletesInEvent >= 5) {
+          conflictingEvents.push(
+            `${event.name} already has 5 athletes from your school`,
+          );
+        }
+      }
+    }
+
+    if (conflictingEvents.length > 0) {
+      throw new BadRequestException({
+        message: 'The following events have conflicts:',
+        conflicts: conflictingEvents,
+      });
+    }
+
+    // Check the number of individual events
+    const individualEvents = events.filter(
+      (event) => event.type === EventType.Individual,
+    );
+    const athleteAge = calculateAge(athlete.dob);
+    // Check swimming events
+    let maxIndividualEvents = 0;
+    if (athleteAge < 11) {
+      maxIndividualEvents = 3;
+    } else if (athleteAge < 14) {
+      maxIndividualEvents = 4;
+    } else {
+      maxIndividualEvents = 5;
+    }
+
+    if (individualEvents.length > maxIndividualEvents) {
+      throw new BadRequestException(
+        `Athletes in this age group can only participate in up to ${maxIndividualEvents} individual events`,
+      );
+    }
+
+    // If all checks pass, update the athlete's events
+    athlete.events = events;
+
+    try {
+      return await this.athleteRepository.save(athlete);
+    } catch (error) {
+      throw new BadRequestException('Failed to update athlete events');
     }
   }
 }

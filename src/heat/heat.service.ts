@@ -4,9 +4,9 @@ import { EventSportGroup } from 'src/event/enums/event-sport-group.enum';
 import { Repository } from 'typeorm';
 import { AthleteHeat } from '../athlete-heat/athlete-heat.entity';
 import { Athlete } from '../athlete/athlete.entity';
+import { Round as RoundEnum } from '../round/enums/round.enum';
 import { Round } from '../round/round.entity';
 import { Heat } from './heat.entity';
-import { Round as RoundEnum } from '../round/enums/round.enum';
 
 @Injectable()
 export class HeatService {
@@ -36,6 +36,10 @@ export class HeatService {
       where: { events: { eventId: round.event.eventId } },
       relations: ['events'],
     });
+
+    console.log(
+      `Total number of athletes registered for this round: ${athletes.length}`,
+    );
 
     if (athletes.length === 0) {
       throw new NotFoundException('No athletes registered for this event');

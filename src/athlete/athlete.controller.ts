@@ -130,4 +130,13 @@ export class AthleteController {
     await this.athleteService.deleteAthlete(id);
     return ApiResponse.success('Athlete deleted successfully');
   }
+
+  @Put(':id/update-events')
+  async updateAthleteEvents(
+    @Param('id') id: string,
+    @Body('eventIds') eventIds: string[],
+  ): Promise<ApiResponse<any>> {
+    const athlete = await this.athleteService.updateAthleteEvents(id, eventIds);
+    return ApiResponse.success('Athlete events updated successfully', athlete);
+  }
 }
