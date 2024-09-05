@@ -722,7 +722,7 @@ export class AthleteService {
     if (conflictingEvents.length > 0) {
       throw new BadRequestException({
         message: 'The following events have conflicts:',
-        conflicts: conflictingEvents,
+        data: conflictingEvents,
       });
     }
 
