@@ -176,7 +176,10 @@ export class AthleteService {
   async findEligibleEvents(
     id: string,
   ): Promise<{ individual: Event[]; group: Event[] }> {
-    const athlete = await this.findOne(id);
+    const athlete = await this.athleteRepository.findOne({
+      where: { registrationId: id },
+      relations: ['school'],
+    });
 
     if (!athlete) {
       throw new NotFoundException(`Athlete with ID ${id} not found`);
@@ -187,9 +190,18 @@ export class AthleteService {
     if (athleteAge > 19) {
       throw new BadRequestException('Athlete is over 19 and is not eligible');
     } else if (athleteAge < 11) {
-      athleteGroup = [EventCategory.Under11, EventCategory.Under14, EventCategory.Under17, EventCategory.Under19];
+      athleteGroup = [
+        EventCategory.Under11,
+        EventCategory.Under14,
+        EventCategory.Under17,
+        EventCategory.Under19,
+      ];
     } else if (athleteAge < 14) {
-      athleteGroup = [EventCategory.Under14, EventCategory.Under17, EventCategory.Under19];
+      athleteGroup = [
+        EventCategory.Under14,
+        EventCategory.Under17,
+        EventCategory.Under19,
+      ];
     } else if (athleteAge < 17) {
       athleteGroup = [EventCategory.Under17, EventCategory.Under19];
     } else if (athleteAge < 19) {
@@ -215,16 +227,17 @@ export class AthleteService {
       relations: ['events'],
     });
 
-    const registeredEventIds = schoolAthletes
-  .flatMap(athlete => athlete.events.map(event => event.eventId));
+    const registeredEventIds = schoolAthletes.flatMap((athlete) =>
+      athlete.events.map((event) => event.eventId),
+    );
 
-  const availableEvents = events.filter(
-    event => !registeredEventIds.includes(event.eventId),
-  );
+    const availableEvents = events.filter(
+      (event) => !registeredEventIds.includes(event.eventId),
+    );
 
-  if (availableEvents.length === 0) {
-    throw new NotFoundException('No available events found');
-  }
+    if (availableEvents.length === 0) {
+      throw new NotFoundException('No available events found');
+    }
 
     // Group events by type
     const groupedEvents = availableEvents.reduce(
