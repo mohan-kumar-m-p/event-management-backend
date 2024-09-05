@@ -173,9 +173,7 @@ export class AthleteService {
     return result;
   }
 
-  async findEligibleEvents(
-    id: string,
-  ): Promise<{ individual: Event[]; group: Event[] }> {
+  async findEligibleEvents(id: string): Promise<any> {
     const athlete = await this.athleteRepository.findOne({
       where: { registrationId: id },
       relations: ['school'],
@@ -239,24 +237,40 @@ export class AthleteService {
       throw new NotFoundException('No available events found');
     }
 
-    // Group events by type
-    const groupedEvents = availableEvents.reduce(
+    type GroupedEvents = {
+      individual: { [key in EventCategory]?: Event[] };
+      group: { [key in EventCategory]?: Event[] };
+    };
+
+    // Group events by type and then by category
+    const groupedEvents = availableEvents.reduce<GroupedEvents>(
       (acc, event) => {
+        const categoryKey = event.category as EventCategory;
         if (event.type === EventType.Individual) {
-          acc.individual.push(event);
+          if (!acc.individual[categoryKey]) {
+            acc.individual[categoryKey] = [];
+          }
+          acc.individual[categoryKey].push(event);
         } else if (event.type === EventType.Group) {
-          acc.group.push(event);
+          if (!acc.group[categoryKey]) {
+            acc.group[categoryKey] = [];
+          }
+          acc.group[categoryKey].push(event);
         }
         return acc;
       },
-      { individual: [], group: [] },
+      { individual: {}, group: {} },
     );
 
     // Check if both groups have events
-    if (
-      groupedEvents.individual.length === 0 &&
-      groupedEvents.group.length === 0
-    ) {
+    const hasIndividualEvents = Object.values(groupedEvents.individual).some(
+      (events) => events.length > 0,
+    );
+    const hasGroupEvents = Object.values(groupedEvents.group).some(
+      (events) => events.length > 0,
+    );
+
+    if (!hasIndividualEvents && !hasGroupEvents) {
       throw new NotFoundException(
         'No events found for either individual or group categories',
       );
