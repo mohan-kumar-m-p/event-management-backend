@@ -51,4 +51,11 @@ export class UpdateAthleteDto {
     message: 'needAccomodation must be either "true" or "false"',
   })
   needAccomodation: string;
+
+  @IsNotEmpty()
+  @IsString()
+  @IsIn(['true', 'false'], {
+    message: 'needAccomodation must be either "true" or "false"',
+  })
+  isPaid: string;
 }

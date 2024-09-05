@@ -18,6 +18,7 @@ export class MealService {
   ) {}
 
   async generateQRCode(id: string, entity: string): Promise<string> {
+    const backendUrl = process.env.BACKEND_URL;
     const entityQueryParams = {
       athlete: 'registrationId',
       manager: 'managerId',
@@ -26,7 +27,7 @@ export class MealService {
 
     const queryParam = entityQueryParams[entity];
 
-    const url = `https://your-domain.com/verify-meal?${queryParam}=${id}`;
+    const url = `${backendUrl}/verify-meal?${queryParam}=${id}`;
 
     // Generate QR code
     const qrCode = await QRCode.toDataURL(url);
