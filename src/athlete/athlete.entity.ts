@@ -98,6 +98,9 @@ export class Athlete extends BaseEntity {
   @JoinColumn({ name: 'athleteId' })
   culturalProgram: CulturalProgram;
 
-  @Column({ nullable: true, default: 'false' })
+  @Column({ default: 'false' })
   needAccomodation: string;
+
+  @Column({ default: 'false' })
+  isPaid: string;
 }
