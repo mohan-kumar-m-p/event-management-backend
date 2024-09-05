@@ -71,26 +71,49 @@ export class ManagerService {
     return result;
   }
 
-  async findAll(): Promise<Manager[]> {
+  async findAll(): Promise<any[]> {
     const managers = await this.managerRepository.find({
       relations: ['school', 'accommodation'],
     });
     if (!managers) {
       throw new NotFoundException('No managers found');
     }
-    const result = managers.map((manager) => {
-      const transformedManager = {
-        ...manager,
-        affiliationNumber: manager.school.affiliationNumber,
-        schoolName: manager.school.name,
-        accommodationId: manager.accommodation?.accommodationId || null,
-        accommodationName: manager.accommodation?.name || null,
-        blockName: manager.accommodation?.block.name || null,
-      };
-      delete transformedManager.school;
-      delete transformedManager.accommodation;
-      return transformedManager;
-    });
+    const result = await Promise.all(
+      managers.map(async (manager) => {
+        const transformedManager: Record<string, any> = {
+          ...manager,
+          affiliationNumber: manager.school.affiliationNumber,
+          schoolName: manager.school.name,
+          accommodationId: manager.accommodation?.accommodationId || null,
+          accommodationName: manager.accommodation?.name || null,
+          blockName: manager.accommodation?.block.name || null,
+        };
+
+        if (manager.photoUrl) {
+          try {
+            const bucketName = process.env.S3_BUCKET_NAME;
+            const fileData = await this.s3Service.getFile(
+              bucketName,
+              manager.photoUrl,
+            );
+            const base64Image = fileData.Body.toString('base64');
+            transformedManager.photo = `data:${fileData.ContentType};base64,${base64Image}`;
+          } catch (error) {
+            this.logger.error(
+              `Error occurred while retrieving manager's photo from S3: ${error.message}`,
+            );
+            transformedManager.photo = null;
+          }
+        } else {
+          transformedManager.photo = null; // No photoUrl in DB
+        }
+
+        delete transformedManager.school;
+        delete transformedManager.accommodation;
+
+        return transformedManager;
+      }),
+    );
     return result;
   }
 

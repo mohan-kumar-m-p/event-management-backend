@@ -71,26 +71,49 @@ export class CoachService {
     return result;
   }
 
-  async findAll(): Promise<Coach[]> {
+  async findAll(): Promise<any[]> {
     const coaches = await this.coachRepository.find({
       relations: ['school', 'accommodation'],
     });
     if (!coaches) {
       throw new NotFoundException('No coaches found');
     }
-    const result = coaches.map((coach) => {
-      const transformedCoach = {
-        ...coach,
-        affiliationNumber: coach.school.affiliationNumber,
-        schoolName: coach.school.name,
-        accommodationId: coach.accommodation?.accommodationId || null,
-        accommodationName: coach.accommodation?.name || null,
-        blockName: coach.accommodation?.block.name || null,
-      };
-      delete transformedCoach.school;
-      delete transformedCoach.accommodation;
-      return transformedCoach;
-    });
+    const result = await Promise.all(
+      coaches.map(async (coach) => {
+        const transformedCoach: Record<string, any> = {
+          ...coach,
+          affiliationNumber: coach.school.affiliationNumber,
+          schoolName: coach.school.name,
+          accommodationId: coach.accommodation?.accommodationId || null,
+          accommodationName: coach.accommodation?.name || null,
+          blockName: coach.accommodation?.block.name || null,
+        };
+
+        if (coach.photoUrl) {
+          try {
+            const bucketName = process.env.S3_BUCKET_NAME;
+            const fileData = await this.s3Service.getFile(
+              bucketName,
+              coach.photoUrl,
+            );
+            const base64Image = fileData.Body.toString('base64');
+            transformedCoach.photo = `data:${fileData.ContentType};base64,${base64Image}`;
+          } catch (error) {
+            this.logger.error(
+              `Error occurred while retrieving coach's photo from S3: ${error.message}`,
+            );
+            transformedCoach.photo = null;
+          }
+        } else {
+          transformedCoach.photo = null; // No photoUrl in DB
+        }
+
+        delete transformedCoach.school;
+        delete transformedCoach.accommodation;
+
+        return transformedCoach;
+      }),
+    );
     return result;
   }
 
