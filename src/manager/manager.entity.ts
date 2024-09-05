@@ -57,4 +57,7 @@ export class Manager extends BaseEntity {
 
   @Column({ type: 'timestamp', nullable: true })
   otpExpiry: Date;
+
+  @Column({ nullable: true, default: 'false' })
+  needAccomodation: string;
 }
