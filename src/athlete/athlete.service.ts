@@ -383,6 +383,14 @@ export class AthleteService {
       throw new NotFoundException('One or more events not found');
     }
 
+    // Check if all events have the same category
+    const categories = new Set(events.map((event) => event.category));
+    if (categories.size > 1) {
+      throw new BadRequestException(
+        'Only events from the same age category can be selected',
+      );
+    }
+
     const athleteAge = calculateAge(athlete.dob);
 
     // Fetch all athletes from the same school
