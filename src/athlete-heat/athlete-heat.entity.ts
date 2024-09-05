@@ -27,7 +27,7 @@ export class AthleteHeat {
   @Column({ nullable: true })
   position: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'time', nullable: true })
   time: string;
 
   @Column({ default: false })

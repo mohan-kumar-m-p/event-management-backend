@@ -194,6 +194,14 @@ export class AthleteService {
       existingAthlete.chestNumber = athleteDto.aadhaarNumber.slice(-5);
     }
 
+    // Check for DOB or gender changes
+    if (
+      (athleteDto.dob && athleteDto.dob !== existingAthlete.dob) ||
+      (athleteDto.gender && athleteDto.gender !== existingAthlete.gender)
+    ) {
+      existingAthlete.events = [];
+    }
+
     Object.assign(existingAthlete, athleteDto);
 
     if (athleteDto.affiliationNumber) {
@@ -208,17 +216,20 @@ export class AthleteService {
       existingAthlete.school = school;
     }
 
-     // Handle photo updates
-  if (photo) {
-    // If the existing athlete had a photo, delete the old photo from S3
-    if (existingAthlete.photoUrl) {
-      await this.s3Service.deleteFile(process.env.S3_BUCKET_NAME, existingAthlete.photoUrl);
-    }
+    // Handle photo updates
+    if (photo) {
+      // If the existing athlete had a photo, delete the old photo from S3
+      if (existingAthlete.photoUrl) {
+        await this.s3Service.deleteFile(
+          process.env.S3_BUCKET_NAME,
+          existingAthlete.photoUrl,
+        );
+      }
 
-    // Upload the new photo to S3 and update the photoUrl
-    const uploadedFile = await this.s3Service.uploadFile(photo, 'athlete');
-    existingAthlete.photoUrl = uploadedFile.fileKey;
-  }
+      // Upload the new photo to S3 and update the photoUrl
+      const uploadedFile = await this.s3Service.uploadFile(photo, 'athlete');
+      existingAthlete.photoUrl = uploadedFile.fileKey;
+    }
 
     const result = {
       ...existingAthlete,
@@ -251,9 +262,22 @@ export class AthleteService {
       throw new BadRequestException('No events provided');
     }
 
-    const events = await this.eventRepository.findBy({ eventId: In(eventIds) });
+    // Filter out events that are already assigned to the athlete
+    const newEventIds = eventIds.filter(
+      (eventId) => !athlete.events.some((event) => event.eventId === eventId),
+    );
 
-    if (events.length !== eventIds.length) {
+    if (newEventIds.length === 0) {
+      throw new BadRequestException(
+        'All provided events are already assigned to the athlete',
+      );
+    }
+
+    const events = await this.eventRepository.findBy({
+      eventId: In(newEventIds),
+    });
+
+    if (events.length !== newEventIds.length) {
       throw new NotFoundException('One or more events not found');
     }
 

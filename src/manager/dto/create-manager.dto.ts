@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateManagerDto {
   @IsNotEmpty()
@@ -28,4 +28,11 @@ export class CreateManagerDto {
   @IsNotEmpty()
   @IsString()
   emailId: string;
+
+  @IsNotEmpty()
+  @IsString()
+  @IsIn(['true', 'false'], {
+    message: 'needAccomodation must be either "true" or "false"',
+  })
+  needAccomodation: string;
 }

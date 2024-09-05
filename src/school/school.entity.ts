@@ -15,22 +15,22 @@ export class School extends BaseEntity {
   @Column()
   emailId: string;
 
-  @Column()
+  @Column({ nullable: true })
   state: string;
 
-  @Column()
+  @Column({ nullable: true })
   district: string;
 
-  @Column()
+  @Column({ nullable: true })
   address: string;
 
-  @Column()
+  @Column({ nullable: true })
   nameOfPrincipal: string;
 
-  @Column()
+  @Column({ nullable: true })
   contactName: string;
 
-  @Column()
+  @Column({ nullable: true })
   contactNumber: string;
 
   @OneToMany(() => Athlete, (athlete) => athlete.school)

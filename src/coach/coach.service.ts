@@ -190,7 +190,6 @@ export class CoachService {
       affiliationNumber: existingCoach.school.affiliationNumber,
       accommodationId: existingCoach.accommodation?.accommodationId || null,
       photoUrl: existingCoach.photoUrl || null,
-
     };
     delete result.school;
     delete result.accommodation;

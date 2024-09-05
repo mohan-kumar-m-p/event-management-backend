@@ -197,4 +197,97 @@ export class HeatService {
 
     return semiFinalHeats;
   }
+
+  async generateFinalHeat(id: string): Promise<Heat> {
+    const finalRound = await this.roundRepository.findOne({
+      where: { roundId: id },
+      relations: ['event'],
+    });
+
+    if (!finalRound) {
+      throw new NotFoundException(`Final round with ID ${id} not found`);
+    }
+
+    const semifinalRound = await this.roundRepository.findOne({
+      where: {
+        event: { eventId: finalRound.event.eventId },
+        round: RoundEnum.Semifinals,
+      },
+    });
+
+    if (!semifinalRound) {
+      throw new NotFoundException(
+        `Semifinal round not found for event ${semifinalRound.event.eventId}`,
+      );
+    }
+
+    // Get all athletes from semifinal heats
+    const semifinalAthletes = await this.athleteHeatRepository.find({
+      where: { heat: { round: { roundId: semifinalRound.roundId } } },
+      relations: ['athlete', 'heat'],
+      order: { heat: { heatId: 'ASC' }, position: 'ASC', time: 'ASC' },
+    });
+
+    // Group athletes by heat
+    const athletesByHeat = semifinalAthletes.reduce((acc, athlete) => {
+      if (!acc[athlete.heat.heatId]) {
+        acc[athlete.heat.heatId] = [];
+      }
+      acc[athlete.heat.heatId].push(athlete);
+      return acc;
+    }, {});
+
+    // Select top 3 from each heat, then 2nd place from each heat
+    const qualifiedAthletes: AthleteHeat[] = [];
+    for (let i = 0; i < 3; i++) {
+      for (const heatId in athletesByHeat) {
+        if (athletesByHeat[heatId][i]) {
+          qualifiedAthletes.push(athletesByHeat[heatId][i]);
+        }
+      }
+    }
+
+    // Select 2 fastest from remaining athletes
+    const remainingAthletes = semifinalAthletes.filter(
+      (athlete) => !qualifiedAthletes.includes(athlete),
+    );
+    const fastestRemaining = remainingAthletes
+      .sort((a, b) => {
+        if (!a.time || !b.time) return 0;
+        return this.parseTimeToMs(a.time) - this.parseTimeToMs(b.time);
+      })
+      .slice(0, 2);
+
+    // Combine qualified athletes
+    const finalAthletes = [...qualifiedAthletes, ...fastestRemaining];
+
+    // Create final heat
+    const finalHeat = this.heatRepository.create({
+      heatName: 'Final',
+      round: finalRound,
+      athletePlacements: new Array(8).fill(null),
+    });
+    await this.heatRepository.save(finalHeat);
+
+    // Assign athletes to lanes
+    for (let i = 0; i < finalAthletes.length; i++) {
+      const athlete = finalAthletes[i].athlete;
+      finalHeat.athletePlacements[i] = athlete.chestNumber;
+      const newAthleteHeat = this.athleteHeatRepository.create({
+        athlete,
+        heat: finalHeat,
+        lane: i + 1,
+      });
+      await this.athleteHeatRepository.save(newAthleteHeat);
+    }
+
+    await this.heatRepository.save(finalHeat);
+
+    return finalHeat;
+  }
+
+  private parseTimeToMs(timeString: string): number {
+    const [minutes, seconds, milliseconds] = timeString.split(':').map(Number);
+    return (minutes * 60 + seconds) * 1000 + milliseconds;
+  }
 }

@@ -20,6 +20,9 @@ import { WildcardController } from './wildcard.controller';
 import { HeatModule } from './heat/heat.module';
 import { PaymentModule } from './payment/payment.module';
 import { AthleteHeatModule } from './athlete-heat/athlete-heat.module';
+import { CulturalProgramModule } from './cultural-program/cultural-program.module';
+import { ExperienceZoneModule } from './experience-zone/experience-zone.module';
+import { DiscoverySessionModule } from './discovery-session/discovery-session.module';
 
 @Module({
   imports: [
@@ -56,6 +59,9 @@ import { AthleteHeatModule } from './athlete-heat/athlete-heat.module';
     PaymentModule,
     SharedModule,
     AthleteHeatModule,
+    CulturalProgramModule,
+    ExperienceZoneModule,
+    DiscoverySessionModule,
   ],
   controllers: [WildcardController],
 })

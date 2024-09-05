@@ -21,6 +21,14 @@ export class HeatController {
     @Param('roundId') roundId: string,
   ): Promise<ApiResponse<any>> {
     const heats = await this.heatService.generateSemifinalHeats(roundId);
-    return ApiResponse.success('Qualifier heats generated successfully', heats);
+    return ApiResponse.success('Semifinal heats generated successfully', heats);
+  }
+
+  @Post(':roundId/generate-final-heat')
+  async generateFinalHeat(
+    @Param('roundId') roundId: string,
+  ): Promise<ApiResponse<any>> {
+    const heat = await this.heatService.generateSemifinalHeats(roundId);
+    return ApiResponse.success('Final heat generated successfully', heat);
   }
 }

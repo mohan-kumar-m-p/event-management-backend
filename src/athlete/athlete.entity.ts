@@ -7,12 +7,14 @@ import {
   ManyToMany,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Accommodation } from '../accommodation/accommodation.entity';
 import { Event } from '../event/event.entity';
 import { School } from '../school/school.entity';
 import { BaseEntity } from '../shared/base.entity';
+import { CulturalProgram } from '../cultural-program/cultural-program.entity';
 
 @Entity()
 export class Athlete extends BaseEntity {
@@ -53,14 +55,8 @@ export class Athlete extends BaseEntity {
   @Column()
   class: string;
 
-  @Column({ nullable: true })
-  admissionNumber: string;
-
   @Column({ type: 'int', default: 5 })
   mealsRemaining: number;
-
-  @Column({ default: false })
-  paid: boolean;
 
   @Column({ type: 'text', nullable: true })
   photoUrl: string;
@@ -97,4 +93,11 @@ export class Athlete extends BaseEntity {
 
   @OneToMany(() => AthleteHeat, (athleteHeat) => athleteHeat.athlete)
   athleteHeats: AthleteHeat[];
+
+  @OneToOne(() => CulturalProgram, (culturalProgram) => culturalProgram.athlete)
+  @JoinColumn({ name: 'athleteId' })
+  culturalProgram: CulturalProgram;
+
+  @Column({ nullable: true, default: 'false' })
+  needAccomodation: string;
 }
