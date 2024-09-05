@@ -185,7 +185,7 @@ export class AthleteService {
 
     let athleteGroup;
     if (athleteAge > 19) {
-      throw new BadRequestException('Athlete is not eligible');
+      throw new BadRequestException('Athlete is over 19 and is not eligible');
     } else if (athleteAge < 11) {
       athleteGroup = [EventCategory.Under11, EventCategory.Under14, EventCategory.Under17, EventCategory.Under19];
     } else if (athleteAge < 14) {
@@ -198,7 +198,7 @@ export class AthleteService {
 
     const events = await this.eventRepository.find({
       where: {
-        category: athleteGroup,
+        category: In(athleteGroup),
         gender: athlete.gender,
         sportGroup: EventSportGroup.Swimming,
       },
