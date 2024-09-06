@@ -3,6 +3,7 @@ import { Athlete } from '../athlete/athlete.entity';
 import { Coach } from '../coach/coach.entity';
 import { Manager } from '../manager/manager.entity';
 import { BaseEntity } from '../shared/base.entity';
+import { PaymentStatus } from '../payment/enum/payment-status.enum';
 
 @Entity()
 export class School extends BaseEntity {
@@ -65,4 +66,7 @@ export class School extends BaseEntity {
 
   @Column({ default: 'false' })
   isPaid: string;
+
+  @Column({ default: PaymentStatus.NotPaid })
+  paymentStatus: string;
 }
