@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Put, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiResponse } from 'src/shared/dto/api-response.dto';
 import { TransportDetailsDto } from './dto/transport-details.dto';
@@ -22,7 +22,7 @@ export class SchoolController {
     return ApiResponse.success('School retrieved successfully', school);
   }
 
-  @Patch(':id/transport-details')
+  @Put(':id/transport-details')
   async updateTransportDetails(
     @Param('id') id: string,
     @Body() transportDetails: TransportDetailsDto,
