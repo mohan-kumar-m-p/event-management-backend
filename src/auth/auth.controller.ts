@@ -1,10 +1,11 @@
 import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
+import { OrganizerRole } from 'src/organizer/roles';
 import { ApiResponse } from '../shared/dto/api-response.dto';
 import { AuthService } from './auth.service';
-import { OtpPhoneDto } from './dto/otpPhone.dto';
 import { OtpEmailDto } from './dto/otpEmail.dto';
+import { OtpPhoneDto } from './dto/otpPhone.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -16,14 +17,23 @@ export class AuthController {
     @Res({ passthrough: true }) response: Response,
   ): Promise<ApiResponse<any>> {
     try {
+      const roles = authenticated.user.roles;
       const { access_token } = this.authService.organizerLogin(
         authenticated.user,
       );
-      response.cookie('access_token', access_token, {
-        httpOnly: true,
-        secure: false,
-      });
-      return ApiResponse.success('Login Successful', authenticated.user);
+
+      if (roles.includes(OrganizerRole.MessManager)) {
+        return ApiResponse.success('Login Successful', {
+          user: authenticated.user,
+          access_token,
+        });
+      } else {
+        response.cookie('access_token', access_token, {
+          httpOnly: true,
+          secure: false,
+        });
+        return ApiResponse.success('Login Successful', authenticated.user);
+      }
     } catch (error) {
       console.log(`Error occured during user login: ${error}`);
       throw error;
