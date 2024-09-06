@@ -99,6 +99,7 @@ export class AuthController {
       response.cookie('access_token', access_token, {
         httpOnly: true,
         secure: false,
+        path: '/',
       });
       return ApiResponse.success('Login Successful', authenticated.user);
     } catch (error) {
