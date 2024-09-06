@@ -24,7 +24,7 @@ export class MealController {
     @Body() body?,
   ): Promise<ApiResponse<any>> {
     let athleteId;
-    if (body) {
+    if (body && Object.keys(body).length !== 0) {
       athleteId = body.registrationId;
     }
     const qrCode = await this.mealService.generateQRCode(

@@ -249,6 +249,7 @@ export class AuthService {
     const jwtPaylod: any = {
       sub: authenticatedUser[primaryKeyMap[authenticatedUser.entity]],
       affiliationNumber: authenticatedUser.school.affiliationNumber,
+      entity: authenticatedUser.entity,
     };
 
     return {
