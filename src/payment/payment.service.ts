@@ -56,6 +56,10 @@ export class PaymentService {
     const { affiliationNumber, status } = paymentDto;
 
     try {
+      if (!affiliationNumber) {
+        throw new BadRequestException('Affiliation number must be provided');
+      }
+  
       const school = await this.schoolRepository.findOne({
         where: { affiliationNumber },
       });
@@ -84,6 +88,10 @@ export class PaymentService {
 
   async updatePaymentStatusSchool(affiliationNumber, status) {
     try {
+      if (!affiliationNumber) {
+        throw new BadRequestException('Affiliation number must be provided');
+      }
+
       const school = await this.schoolRepository.findOne({
         where: { affiliationNumber },
       });
