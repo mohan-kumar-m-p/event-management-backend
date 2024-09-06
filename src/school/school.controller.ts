@@ -36,4 +36,27 @@ export class SchoolController {
       updatedSchool,
     );
   }
+
+  @Patch(':id/accommodation')
+  async updateAccommodationRequirement(
+    @Param('id') id: string,
+    @Body('accommodationRequired') accommodationRequired: boolean,
+  ): Promise<ApiResponse<any>> {
+    await this.schoolService.updateAccommodationRequirement(
+      id,
+      accommodationRequired,
+    );
+    return ApiResponse.success(
+      'Accommodation requirement updated successfully',
+    );
+  }
+
+  @Patch(':id/payment')
+  async updatePaymentStatus(
+    @Param('id') id: string,
+    @Body('isPaid') isPaid: boolean,
+  ): Promise<ApiResponse<any>> {
+    await this.schoolService.updatePaymentStatus(id, isPaid);
+    return ApiResponse.success('Payment status updated successfully');
+  }
 }

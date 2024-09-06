@@ -34,22 +34,22 @@ export class Athlete extends BaseEntity {
   @Column({ length: 1 }) // (M/F)
   gender: string;
 
-  @Column({ length: 12 })
+  @Column({ nullable: true, unique: true, length: 12 })
   aadhaarNumber: string;
 
-  @Column({ length: 5 }) // last 5 digits of aadhaar
+  @Column({ nullable: true, length: 5 }) // last 5 digits of aadhaar
   chestNumber: string;
 
-  @Column()
+  @Column({ unique: true })
   phone: string;
 
   @Column()
   emailId: string;
 
-  @Column()
+  @Column({ nullable: true })
   nameOfFather: string;
 
-  @Column()
+  @Column({ nullable: true })
   nameOfMother: string;
 
   @Column()
@@ -60,9 +60,6 @@ export class Athlete extends BaseEntity {
 
   @Column({ type: 'text', nullable: true })
   photoUrl: string;
-
-  // @Column({ type: 'text', nullable: true })
-  // qrCode: string;
 
   @ManyToOne(() => Accommodation, (accommodation) => accommodation.athletes)
   @JoinColumn({ name: 'accommodationId' })
@@ -97,10 +94,4 @@ export class Athlete extends BaseEntity {
   @OneToOne(() => CulturalProgram, (culturalProgram) => culturalProgram.athlete)
   @JoinColumn({ name: 'athleteId' })
   culturalProgram: CulturalProgram;
-
-  @Column({ default: 'false' })
-  needAccomodation: string;
-
-  @Column({ default: 'false' })
-  isPaid: string;
 }

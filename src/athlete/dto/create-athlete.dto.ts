@@ -1,4 +1,4 @@
-import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateAthleteDto {
   @IsNotEmpty()
@@ -17,9 +17,9 @@ export class CreateAthleteDto {
   @IsString()
   gender: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  aadhaarNumber: string;
+  aadhaarNumber?: string;
 
   @IsNotEmpty()
   @IsString()
@@ -43,12 +43,5 @@ export class CreateAthleteDto {
 
   @IsOptional()
   @IsString()
-  admissionNumber: string;
-
-  @IsNotEmpty()
-  @IsString()
-  @IsIn(['true', 'false'], {
-    message: 'needAccomodation must be either "true" or "false"',
-  })
-  needAccomodation: string;
+  admissionNumber?: string;
 }

@@ -59,4 +59,10 @@ export class School extends BaseEntity {
 
   @Column({ nullable: true })
   pickUpLocation: string;
+
+  @Column({ default: 'false' })
+  accommodationRequired: string;
+
+  @Column({ default: 'false' })
+  isPaid: string;
 }

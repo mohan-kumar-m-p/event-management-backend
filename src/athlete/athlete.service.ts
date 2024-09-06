@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   Logger,
   NotFoundException,
@@ -39,6 +40,11 @@ export class AthleteService {
     schoolAffiliationNumber: string,
     photo?: Express.Multer.File,
   ): Promise<Athlete> {
+    await this.checkUniqueConstraints(
+      athleteDto.phone,
+      athleteDto.aadhaarNumber,
+    );
+
     const affiliationNumber =
       athleteDto.affiliationNumber || schoolAffiliationNumber;
 
@@ -344,6 +350,11 @@ export class AthleteService {
     photo?: Express.Multer.File,
   ): Promise<Athlete> {
     const existingAthlete = await this.findOne(id);
+    await this.checkUniqueConstraints(
+      athleteDto.phone || existingAthlete.phone,
+      athleteDto.aadhaarNumber || existingAthlete.aadhaarNumber,
+      id,
+    );
     if (!existingAthlete) {
       throw new NotFoundException(`Athlete with ID ${id} not found`);
     }
@@ -813,6 +824,30 @@ export class AthleteService {
       return await this.athleteRepository.save(athlete);
     } catch (error) {
       throw new BadRequestException('Failed to update athlete events');
+    }
+  }
+
+  private async checkUniqueConstraints(
+    phone: string,
+    aadhaarNumber?: string,
+    excludeId?: string,
+  ) {
+    const phoneExists = await this.athleteRepository.findOne({
+      where: { phone },
+    });
+
+    if (phoneExists && phoneExists.registrationId !== excludeId) {
+      throw new ConflictException('Phone number already exists');
+    }
+
+    if (aadhaarNumber) {
+      const aadhaarExists = await this.athleteRepository.findOne({
+        where: { aadhaarNumber },
+      });
+
+      if (aadhaarExists && aadhaarExists.registrationId !== excludeId) {
+        throw new ConflictException('Aadhaar number already exists');
+      }
     }
   }
 }

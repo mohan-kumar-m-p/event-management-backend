@@ -27,7 +27,7 @@ export class Coach extends BaseEntity {
   @Column({ length: 1 }) // (M/F)
   gender: string;
 
-  @Column({ length: 12 })
+  @Column({ unique: true, nullable: true, length: 12 })
   aadhaarNumber: string;
 
   @Column()
@@ -42,9 +42,6 @@ export class Coach extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   photoUrl: string;
 
-  // @Column({ type: 'text', nullable: true })
-  // qrCode: string;
-
   @ManyToOne(() => Accommodation, (accommodation) => accommodation.coaches)
   @JoinColumn({ name: 'accommodationId' })
   accommodation: Accommodation;
@@ -57,10 +54,4 @@ export class Coach extends BaseEntity {
 
   @Column({ type: 'timestamp', nullable: true })
   otpExpiry: Date;
-
-  @Column({ default: 'false' })
-  needAccomodation: string;
-
-  @Column({ default: 'false' })
-  isPaid: string;
 }

@@ -18,6 +18,8 @@ export class SchoolService {
     private readonly managerRepository: Repository<Manager>,
     @InjectRepository(Coach)
     private readonly coachRepository: Repository<Coach>,
+    @InjectRepository(Event)
+    private readonly eventRepository: Repository<Event>,
   ) {}
 
   async findAll(): Promise<any[]> {
@@ -68,11 +70,21 @@ export class SchoolService {
       where: { school: { affiliationNumber: school.affiliationNumber } },
     });
 
+    const events = await this.eventRepository
+      .createQueryBuilder('event')
+      .innerJoin('event.athletes', 'athlete')
+      .innerJoin('athlete.school', 'school')
+      .where('school.affiliationNumber = :id', { id: school.affiliationNumber })
+      .getMany();
+
+    const eventCount = events.length;
+
     return {
       ...school,
       athleteCount,
       managerCount,
       coachCount,
+      eventCount,
     };
   }
 
@@ -88,6 +100,33 @@ export class SchoolService {
     }
 
     Object.assign(school, transportDetails);
+    return this.schoolRepository.save(school);
+  }
+
+  async updateAccommodationRequirement(
+    id: string,
+    accommodationRequired: boolean,
+  ): Promise<any> {
+    const school = await this.schoolRepository.findOne({
+      where: { affiliationNumber: id },
+    });
+    if (!school) {
+      throw new NotFoundException(`School with ID ${id} not found`);
+    }
+    school.accommodationRequired = accommodationRequired.toString();
+    return this.schoolRepository.save(school);
+  }
+
+  async updatePaymentStatus(id: string, isPaid: boolean): Promise<School> {
+    const school = await this.schoolRepository.findOne({
+      where: { affiliationNumber: id },
+    });
+
+    if (!school) {
+      throw new NotFoundException(`School with ID ${id} not found`);
+    }
+
+    school.isPaid = isPaid ? 'true' : 'false';
     return this.schoolRepository.save(school);
   }
 }

@@ -1,13 +1,13 @@
-import { IsIn, IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class UpdateCoachDto {
   @IsNotEmpty()
   @IsString()
   name: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  affiliationNumber: string;
+  affiliationNumber?: string;
 
   @IsNotEmpty()
   @IsString()
@@ -17,9 +17,9 @@ export class UpdateCoachDto {
   @IsString()
   gender: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  aadhaarNumber: string;
+  aadhaarNumber?: string;
 
   @IsNotEmpty()
   @IsString()
@@ -29,17 +29,7 @@ export class UpdateCoachDto {
   @IsString()
   emailId: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  @IsIn(['true', 'false'], {
-    message: 'needAccomodation must be either "true" or "false"',
-  })
-  needAccomodation: string;
-
-  @IsNotEmpty()
-  @IsString()
-  @IsIn(['true', 'false'], {
-    message: 'needAccomodation must be either "true" or "false"',
-  })
-  isPaid: string;
+  photoUrl?: string;
 }
