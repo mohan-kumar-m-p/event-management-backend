@@ -471,7 +471,7 @@ export class AthleteService {
       }
     }
 
-    const athleteAge = calculateAge(athlete.dob);
+    // const athleteAge = calculateAge(athlete.dob);
 
     // Fetch all athletes from the same school
     const schoolAthletes = await this.athleteRepository.find({
@@ -583,29 +583,38 @@ export class AthleteService {
     }
 
     // Check swimming events
-    let maxSwimmingEvents = 0;
-    if (athleteAge < 11) {
-      maxSwimmingEvents = 3;
-    } else if (athleteAge < 14) {
-      maxSwimmingEvents = 4;
-    } else {
-      maxSwimmingEvents = 5;
+    let maxIndividualEvents = 0;
+    const eventCategory = events[0].category;
+
+    switch (eventCategory) {
+      case EventCategory.Under11:
+        maxIndividualEvents = 3;
+        break;
+      case EventCategory.Under14:
+        maxIndividualEvents = 4;
+        break;
+      case EventCategory.Under17:
+      case EventCategory.Under19:
+        maxIndividualEvents = 5;
+        break;
+      default:
+        throw new BadRequestException('Invalid event category');
     }
 
     const totalIndividualSwimming =
       currentEvents.swimming.individual + newEvents.swimming.individual;
-    if (totalIndividualSwimming > maxSwimmingEvents) {
+    if (totalIndividualSwimming > maxIndividualEvents) {
       conflictingEvents.push(
-        `Swimmer cannot be registered for more than ${maxSwimmingEvents} individual swimming events in their age group. Current: ${currentEvents.swimming.individual}, New: ${newEvents.swimming.individual}, Total: ${totalIndividualSwimming}`,
+        `Swimmer cannot be registered for more than ${maxIndividualEvents} individual swimming events in their age group. Current: ${currentEvents.swimming.individual}, New: ${newEvents.swimming.individual}, Total: ${totalIndividualSwimming}`,
       );
     }
 
     if (
       currentEvents.swimming.individual + newEvents.swimming.individual >
-      maxSwimmingEvents
+      maxIndividualEvents
     ) {
       conflictingEvents.push(
-        `Swimmer cannot be registered for more than ${maxSwimmingEvents} individual swimming events in their age group.`,
+        `Swimmer cannot be registered for more than ${maxIndividualEvents} individual swimming events in their age group.`,
       );
     }
 
@@ -800,15 +809,23 @@ export class AthleteService {
     const individualEvents = events.filter(
       (event) => event.type === EventType.Individual,
     );
-    const athleteAge = calculateAge(athlete.dob);
     // Check swimming events
     let maxIndividualEvents = 0;
-    if (athleteAge < 11) {
-      maxIndividualEvents = 3;
-    } else if (athleteAge < 14) {
-      maxIndividualEvents = 4;
-    } else {
-      maxIndividualEvents = 5;
+    const eventCategory = events[0].category; // All events have the same category as checked earlier
+
+    switch (eventCategory) {
+      case EventCategory.Under11:
+        maxIndividualEvents = 3;
+        break;
+      case EventCategory.Under14:
+        maxIndividualEvents = 4;
+        break;
+      case EventCategory.Under17:
+      case EventCategory.Under19:
+        maxIndividualEvents = 5;
+        break;
+      default:
+        throw new BadRequestException('Invalid event category');
     }
 
     if (individualEvents.length > maxIndividualEvents) {
