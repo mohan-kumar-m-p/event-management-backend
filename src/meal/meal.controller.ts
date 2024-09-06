@@ -9,8 +9,8 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../guards/role.guard';
-import { OrganizerRole } from '../shared/roles';
 import { ApiResponse } from '../shared/dto/api-response.dto';
+import { OrganizerRole } from '../shared/roles';
 import { MealService } from './meal.service';
 
 @UseGuards(AuthGuard('jwt'))
@@ -23,12 +23,14 @@ export class MealController {
     @Request() req,
     @Body() body?,
   ): Promise<ApiResponse<any>> {
-    const schoolAffiliationNumber = body?.affiliationNumber
-      ? body.affiliationNumber
-      : req?.user?.affiliationNumber;
+    let athleteId;
+    if (body) {
+      athleteId = body.registrationId;
+    }
     const qrCode = await this.mealService.generateQRCode(
       req.user.sub,
-      schoolAffiliationNumber,
+      req.user.entity,
+      athleteId,
     );
     return ApiResponse.success('QR Code generated successfully', qrCode);
   }

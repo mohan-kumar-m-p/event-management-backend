@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Athlete } from 'src/athlete/athlete.entity';
 import { Coach } from 'src/coach/coach.entity';
@@ -17,21 +21,74 @@ export class MealService {
     private readonly coachRepository: Repository<Coach>,
   ) {}
 
-  async generateQRCode(id: string, entity: string): Promise<string> {
+  async generateQRCode(
+    id: string,
+    entity: string,
+    athleteId?: string,
+  ): Promise<string> {
     const backendUrl = process.env.BACKEND_URL;
-    const entityQueryParams = {
+    const entityId = {
       athlete: 'registrationId',
       manager: 'managerId',
       coach: 'coachId',
     };
+    let queryParam, queryValue;
+    if (athleteId) {
+      // check if athleteId is valid
+      const athlete = await this.athleteRepository.findOne({
+        where: { registrationId: athleteId },
+        relations: ['school'],
+      });
+      if (!athlete) {
+        throw new NotFoundException('Athlete not found');
+      }
 
-    const queryParam = entityQueryParams[entity];
+      let parent;
+      switch (entity) {
+        case 'manager':
+          parent = await this.managerRepository.findOne({
+            where: { managerId: id },
+            relations: ['school'],
+          });
+          if (!parent) {
+            throw new NotFoundException('Manager not found');
+          }
+          break;
+        case 'coach':
+          parent = await this.coachRepository.findOne({
+            where: { coachId: id },
+            relations: ['school'],
+          });
+          if (!parent) {
+            throw new NotFoundException('Coach not found');
+          }
+          break;
+        default:
+          throw new BadRequestException('Invalid manager/coach entity');
+      }
 
-    const url = `${backendUrl}/verify-meal?${queryParam}=${id}`;
+      // check if athlete and manager/coach are in the same school
+      if (
+        athlete &&
+        parent &&
+        athlete.school.affiliationNumber !== parent.school.affiliationNumber
+      ) {
+        throw new BadRequestException(
+          'Athlete and manager/coach are not from the same school',
+        );
+      }
+
+      queryParam = 'registrationId';
+      queryValue = athleteId;
+    } else {
+      queryParam = entityId[entity];
+      queryValue = id;
+    }
+
+    const url = `${backendUrl}/verify-meal?${queryParam}=${queryValue}`;
 
     // Generate QR code
     const qrCode = await QRCode.toDataURL(url);
-
     return qrCode;
   }
 
