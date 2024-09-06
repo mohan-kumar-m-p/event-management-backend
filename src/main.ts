@@ -7,6 +7,11 @@ import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(cookieParser());
+  app.enableCors({
+    origin: 'https://www.pssemrevents.com/',
+    methods: 'GET,POST,PUT,PATCH,DELETE',
+    credentials: true,
+  });
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix('api/v1');
   app.useGlobalPipes(
@@ -14,6 +19,5 @@ async function bootstrap() {
   );
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  console.log(`Application is running on: ${await app.getUrl()}`);
 }
 bootstrap();
