@@ -31,14 +31,14 @@ export class AuthController {
   }
 
   @Post('logout')
-  logout(
-    @Res({ passthrough: true }) response: Response,
-  ): ApiResponse<any> {
+  logout(@Res({ passthrough: true }) response: Response): ApiResponse<any> {
     try {
       response.clearCookie('access_token', {
         httpOnly: true,
         secure: false,
         path: '/',
+        expires: new Date(0),
+        sameSite: 'lax',
       });
       return ApiResponse.success('Logout Successful');
     } catch (error) {
@@ -100,6 +100,7 @@ export class AuthController {
         httpOnly: true,
         secure: false,
         path: '/',
+        sameSite: 'lax',
       });
       return ApiResponse.success('Login Successful', authenticated.user);
     } catch (error) {
