@@ -31,9 +31,20 @@ export class AuthController {
   }
 
   @Post('logout')
-  async logout(@Res({ passthrough: true }) response: Response) {
-    response.clearCookie('access_token');
-    return ApiResponse.success('Logout Successful');
+  async logout(
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<ApiResponse<any>> {
+    try {
+      response.clearCookie('access_token', {
+        httpOnly: true,
+        secure: false,
+        path: '/',
+      });
+      return ApiResponse.success('Logout Successful');
+    } catch (error) {
+      console.log(`Error occurred during logout: ${error}`);
+      throw error;
+    }
   }
 
   @Post('otp/generate-phone-otp')
@@ -95,5 +106,4 @@ export class AuthController {
       throw error;
     }
   }
-
 }
