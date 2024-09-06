@@ -180,7 +180,7 @@ export class ManagerService {
     existingManager.emailId = managerDto.emailId;
 
     // Update the school if the affiliationNumber has changed
-    if (managerDto.affiliationNumber) {
+    if (managerDto?.affiliationNumber) {
       const school = await this.schoolRepository.findOne({
         where: { affiliationNumber: managerDto.affiliationNumber },
       });
@@ -207,11 +207,20 @@ export class ManagerService {
       existingManager.photoUrl = uploadedFile.fileKey;
     }
 
+    const result = {
+      ...existingManager,
+      affiliationNumber: existingManager?.school?.affiliationNumber,
+      accommodationId: existingManager.accommodation?.accommodationId || null,
+      photoUrl: existingManager.photoUrl || null,
+    };
+    delete result.school;
+    delete result.accommodation;
+
     try {
-      // Save the updated manager entity
-      return this.managerRepository.save(existingManager);
+      await this.managerRepository.save(existingManager);
+      return result;
     } catch (error) {
-      throw new BadRequestException('Failed to update manager');
+      throw new BadRequestException('Failed to update coach');
     }
   }
 

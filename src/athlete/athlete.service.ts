@@ -53,7 +53,7 @@ export class AthleteService {
     }
 
     const school = await this.schoolRepository.findOne({
-      where: { affiliationNumber: athleteDto.affiliationNumber },
+      where: { affiliationNumber },
     });
 
     if (!school) {
@@ -376,7 +376,7 @@ export class AthleteService {
 
     Object.assign(existingAthlete, athleteDto);
 
-    if (athleteDto.affiliationNumber) {
+    if (athleteDto?.affiliationNumber) {
       const school = await this.schoolRepository.findOne({
         where: { affiliationNumber: athleteDto.affiliationNumber },
       });
@@ -405,7 +405,7 @@ export class AthleteService {
 
     const result = {
       ...existingAthlete,
-      affiliationNumber: existingAthlete.school.affiliationNumber,
+      affiliationNumber: existingAthlete?.school?.affiliationNumber,
       accommodationId: existingAthlete.accommodation?.accommodationId || null,
       photoUrl: existingAthlete.photoUrl,
     };
@@ -837,7 +837,12 @@ export class AthleteService {
     });
 
     if (phoneExists && phoneExists.registrationId !== excludeId) {
-      throw new ConflictException('Phone number already exists');
+      throw new ConflictException({
+        message: 'Phone number already exists',
+        data: {
+          type: 'phoneNumber',
+        },
+      });
     }
 
     if (aadhaarNumber) {
@@ -846,7 +851,12 @@ export class AthleteService {
       });
 
       if (aadhaarExists && aadhaarExists.registrationId !== excludeId) {
-        throw new ConflictException('Aadhaar number already exists');
+        throw new ConflictException({
+          message: 'Aadhaar number already exists',
+          data: {
+            type: 'aadhaarNumber',
+          },
+        });
       }
     }
   }

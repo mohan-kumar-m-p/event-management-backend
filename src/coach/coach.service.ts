@@ -181,7 +181,7 @@ export class CoachService {
     existingCoach.emailId = coachDto.emailId;
 
     // Update the school if the affiliationNumber has changed
-    if (coachDto.affiliationNumber) {
+    if (coachDto?.affiliationNumber) {
       const school = await this.schoolRepository.findOne({
         where: { affiliationNumber: coachDto.affiliationNumber },
       });
@@ -210,7 +210,7 @@ export class CoachService {
 
     const result = {
       ...existingCoach,
-      affiliationNumber: existingCoach.school.affiliationNumber,
+      affiliationNumber: existingCoach?.school?.affiliationNumber,
       accommodationId: existingCoach.accommodation?.accommodationId || null,
       photoUrl: existingCoach.photoUrl || null,
     };
