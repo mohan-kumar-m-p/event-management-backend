@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Athlete } from 'src/athlete/athlete.entity';
 import { Coach } from 'src/coach/coach.entity';
@@ -57,7 +57,7 @@ export class MealService {
     }
 
     if (person.mealsRemaining <= 0) {
-      throw new Error('No meals remaining');
+      throw new BadRequestException('No meals remaining');
     }
 
     person.mealsRemaining -= 1;

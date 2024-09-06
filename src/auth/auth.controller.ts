@@ -1,8 +1,8 @@
 import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
-import { OrganizerRole } from 'src/organizer/roles';
 import { ApiResponse } from '../shared/dto/api-response.dto';
+import { OrganizerRole } from '../shared/roles';
 import { AuthService } from './auth.service';
 import { OtpEmailDto } from './dto/otpEmail.dto';
 import { OtpPhoneDto } from './dto/otpPhone.dto';

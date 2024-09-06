@@ -1,16 +1,9 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  Type,
-} from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { OrganizerRole } from '../organizer/roles';
+import { CanActivate, ExecutionContext, Injectable, Type } from '@nestjs/common';
+import { OrganizerRole } from '../shared/roles';
 
 export function DateConditionalGuard(sport: string): Type<CanActivate> {
   @Injectable()
-  class RoleGuardMixin implements CanActivate {
-    constructor(private readonly jwtService: JwtService) {}
+  class DateGuardMixin implements CanActivate {
 
     canActivate(context: ExecutionContext): boolean {
       const currentDate = new Date();
@@ -24,31 +17,22 @@ export function DateConditionalGuard(sport: string): Type<CanActivate> {
       }
 
       const request = context.switchToHttp().getRequest();
-      const token = request.cookies['access_token'];
+      const user = request.user;  
 
-      if (!token) {
-        return false;
-      }
-
-      let decodedToken;
-      try {
-        decodedToken = this.jwtService.verify(token, {
-          secret: process.env.JWT_SECRET,
-        });
-      } catch (err) {
+      if (!user || !user.roles) {
         return false;
       }
 
       if (
-        decodedToken.roles.includes(OrganizerRole.Admin) ||
-        decodedToken.roles.includes(OrganizerRole.RegistrationInCharge)
+        user.roles.includes(OrganizerRole.Admin) ||
+        user.roles.includes(OrganizerRole.RegistrationInCharge)
       ) {
-        return true;
+        return true;  
       }
 
       return false;
     }
   }
 
-  return RoleGuardMixin;
+  return DateGuardMixin;
 }

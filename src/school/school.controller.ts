@@ -50,13 +50,4 @@ export class SchoolController {
       'Accommodation requirement updated successfully',
     );
   }
-
-  @Patch(':id/payment')
-  async updatePaymentStatus(
-    @Param('id') id: string,
-    @Body('isPaid') isPaid: boolean,
-  ): Promise<ApiResponse<any>> {
-    await this.schoolService.updatePaymentStatus(id, isPaid);
-    return ApiResponse.success('Payment status updated successfully');
-  }
 }

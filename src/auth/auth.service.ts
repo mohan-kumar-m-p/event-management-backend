@@ -8,6 +8,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { randomInt } from 'crypto';
+import { SchoolRole } from 'src/shared/roles';
 import { NodeMailerService } from 'src/shared/services/nodeMailer.service';
 import { Repository } from 'typeorm';
 import { Athlete } from '../athlete/athlete.entity';
@@ -330,6 +331,7 @@ export class AuthService {
   ): Record<string, string> {
     const jwtPaylod: any = {
       sub: authenticatedUser.affiliationNumber,
+      roles: [SchoolRole.School],
     };
     return {
       access_token: this.jwtService.sign(jwtPaylod),

@@ -8,7 +8,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        JwtStrategy.extractJWTFromCookie,
+        JwtStrategy.extractJWTFromCookieOrHeader,
       ]),
       ignoreExpiration: false,
       secretOrKey: jwtConstants.secret,
@@ -19,7 +19,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     return payload;
   }
 
-  private static extractJWTFromCookie(req: any): string | null {
+  private static extractJWTFromCookieOrHeader(req: any): string | null {
     if (
       req.cookies &&
       'access_token' in req.cookies &&
@@ -27,6 +27,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     ) {
       return req.cookies.access_token;
     }
+
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith('Bearer ')
+    ) {
+      return req.headers.authorization.split(' ')[1];
+    }
+
     return null;
   }
 }

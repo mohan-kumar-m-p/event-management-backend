@@ -4,36 +4,26 @@ import {
   Injectable,
   Type,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { OrganizerRole } from '../organizer/roles';
+import { OrganizerRole, SchoolRole } from '../shared/roles';
 
-export function RolesGuard(roles: OrganizerRole[]): Type<CanActivate> {
+export function RolesGuard(
+  roles: OrganizerRole[] | SchoolRole[],
+): Type<CanActivate> {
   @Injectable()
   class RoleGuardMixin implements CanActivate {
-    constructor(private readonly jwtService: JwtService) {}
-
     canActivate(context: ExecutionContext): boolean {
       const request = context.switchToHttp().getRequest();
-      const token = request.cookies['access_token'];
+      const user = request.user;
 
-      if (!token) {
+      if (!user || !user.roles) {
         return false;
       }
 
-      let decodedToken;
-      try {
-        decodedToken = this.jwtService.verify(token, {
-          secret: process.env.JWT_SECRET,
-        });
-      } catch (err) {
-        return false;
-      }
-
-      const organizerRoles = decodedToken.roles || [];
-      if (organizerRoles.includes(OrganizerRole.Admin)) {
+      if (user.roles.includes(OrganizerRole.Admin)) {
         return true;
       }
-      return roles.some((role) => organizerRoles.includes(role));
+
+      return roles.some((role) => user.roles.includes(role));
     }
   }
 

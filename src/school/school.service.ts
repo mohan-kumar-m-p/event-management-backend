@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { School } from './school.entity';
 import { Athlete } from 'src/athlete/athlete.entity';
-import { Manager } from 'src/manager/manager.entity';
 import { Coach } from 'src/coach/coach.entity';
+import { Manager } from 'src/manager/manager.entity';
+import { Repository } from 'typeorm';
 import { TransportDetailsDto } from './dto/transport-details.dto';
+import { School } from './school.entity';
 
 @Injectable()
 export class SchoolService {
@@ -114,19 +114,6 @@ export class SchoolService {
       throw new NotFoundException(`School with ID ${id} not found`);
     }
     school.accommodationRequired = accommodationRequired.toString();
-    return this.schoolRepository.save(school);
-  }
-
-  async updatePaymentStatus(id: string, isPaid: boolean): Promise<School> {
-    const school = await this.schoolRepository.findOne({
-      where: { affiliationNumber: id },
-    });
-
-    if (!school) {
-      throw new NotFoundException(`School with ID ${id} not found`);
-    }
-
-    school.isPaid = isPaid ? 'true' : 'false';
     return this.schoolRepository.save(school);
   }
 }

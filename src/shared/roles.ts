@@ -7,3 +7,10 @@ export enum OrganizerRole {
   CulturalProgramCoordinator = 'culturalProgramCoordinator',
   MessManager = 'messManager',
 }
+
+export enum SchoolRole {
+  School = 'school',
+  Manager = 'manager',
+  Coach = 'coach',
+  Athlete = 'athlete',
+}
