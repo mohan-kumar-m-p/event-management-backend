@@ -31,9 +31,9 @@ export class AuthController {
   }
 
   @Post('logout')
-  async logout(
+  logout(
     @Res({ passthrough: true }) response: Response,
-  ): Promise<ApiResponse<any>> {
+  ): ApiResponse<any> {
     try {
       response.clearCookie('access_token', {
         httpOnly: true,
