@@ -159,6 +159,54 @@ export class CoachService {
     return result;
   }
 
+  async findAllBySchool(schoolId: string): Promise<any[]> {
+    const coaches = await this.coachRepository.find({
+      where: { school: { affiliationNumber: schoolId } },
+      relations: ['school', 'accommodation'],
+    });
+    if (!coaches) {
+      throw new NotFoundException('No coaches found');
+    }
+    const result = await Promise.all(
+      coaches.map(async (coach) => {
+        const transformedAthlete: Record<string, any> = {
+          ...coach,
+          affiliationNumber: coach.school.affiliationNumber,
+          schoolName: coach.school.name,
+          accommodationId: coach.accommodation?.accommodationId || null,
+          accommodationName: coach.accommodation?.name || null,
+          blockName: coach.accommodation?.block.name || null,
+        };
+
+        if (coach.photoUrl) {
+          try {
+            const bucketName = process.env.S3_BUCKET_NAME;
+            const fileData = await this.s3Service.getFile(
+              bucketName,
+              coach.photoUrl,
+            );
+            const base64Image = fileData.Body.toString('base64');
+            transformedAthlete.photo = `data:${fileData.ContentType};base64,${base64Image}`;
+          } catch (error) {
+            this.logger.error(
+              `Error occurred while retrieving coach's photo from S3: ${error.message}`,
+            );
+            transformedAthlete.photo = null;
+          }
+        } else {
+          transformedAthlete.photo = null; // No photoUrl in DB
+        }
+
+        delete transformedAthlete.school;
+        delete transformedAthlete.accommodation;
+
+        return transformedAthlete;
+      }),
+    );
+
+    return result;
+  }
+
   async updateCoach(
     id: string,
     coachDto: UpdateCoachDto,

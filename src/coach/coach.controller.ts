@@ -62,6 +62,12 @@ export class CoachController {
     );
   }
 
+  @Get('school/:id')
+  async findAllBySchool(@Param('id') id: string): Promise<ApiResponse<any>> {
+    const coaches = await this.coachService.findAllBySchool(id);
+    return ApiResponse.success('Coaches retrieved successfully', coaches);
+  }
+
   @Put(':id')
   @UseInterceptors(FileInterceptor('photo'))
   async update(

@@ -59,6 +59,12 @@ export class ManagerController {
     return ApiResponse.success('Manager retrieved successfully', manager);
   }
 
+  @Get('school/:id')
+  async findAllBySchool(@Param('id') id: string): Promise<ApiResponse<any>> {
+    const managers = await this.managerService.findAllBySchool(id);
+    return ApiResponse.success('Coaches retrieved successfully', managers);
+  }
+
   @Put(':id')
   @UseInterceptors(FileInterceptor('photo'))
   async update(

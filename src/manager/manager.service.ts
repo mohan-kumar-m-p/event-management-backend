@@ -158,6 +158,54 @@ export class ManagerService {
     return result;
   }
 
+  async findAllBySchool(schoolId: string): Promise<any[]> {
+    const managers = await this.managerRepository.find({
+      where: { school: { affiliationNumber: schoolId } },
+      relations: ['school', 'accommodation'],
+    });
+    if (!managers) {
+      throw new NotFoundException('No managers found');
+    }
+    const result = await Promise.all(
+      managers.map(async (manager) => {
+        const transformedAthlete: Record<string, any> = {
+          ...manager,
+          affiliationNumber: manager.school.affiliationNumber,
+          schoolName: manager.school.name,
+          accommodationId: manager.accommodation?.accommodationId || null,
+          accommodationName: manager.accommodation?.name || null,
+          blockName: manager.accommodation?.block.name || null,
+        };
+
+        if (manager.photoUrl) {
+          try {
+            const bucketName = process.env.S3_BUCKET_NAME;
+            const fileData = await this.s3Service.getFile(
+              bucketName,
+              manager.photoUrl,
+            );
+            const base64Image = fileData.Body.toString('base64');
+            transformedAthlete.photo = `data:${fileData.ContentType};base64,${base64Image}`;
+          } catch (error) {
+            this.logger.error(
+              `Error occurred while retrieving manager's photo from S3: ${error.message}`,
+            );
+            transformedAthlete.photo = null;
+          }
+        } else {
+          transformedAthlete.photo = null; // No photoUrl in DB
+        }
+
+        delete transformedAthlete.school;
+        delete transformedAthlete.accommodation;
+
+        return transformedAthlete;
+      }),
+    );
+
+    return result;
+  }
+
   async updateManager(
     id: string,
     managerDto: UpdateManagerDto,
@@ -220,7 +268,7 @@ export class ManagerService {
       await this.managerRepository.save(existingManager);
       return result;
     } catch (error) {
-      throw new BadRequestException('Failed to update coach');
+      throw new BadRequestException('Failed to update manager');
     }
   }
 
