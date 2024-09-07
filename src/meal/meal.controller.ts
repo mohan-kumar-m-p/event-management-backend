@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   NotFoundException,
   Post,
   Query,
@@ -36,7 +37,7 @@ export class MealController {
   }
 
   @UseGuards(RolesGuard([OrganizerRole.MessManager]))
-  @Post()
+  @Get()
   async verifyMeal(
     @Query('registrationId') registrationId?: string,
     @Query('managerId') managerId?: string,
