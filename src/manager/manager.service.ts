@@ -38,7 +38,7 @@ export class ManagerService {
     }
 
     const school = await this.schoolRepository.findOne({
-      where: { affiliationNumber: managerDto.affiliationNumber },
+      where: { affiliationNumber },
     });
 
     if (!school) {

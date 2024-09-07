@@ -37,7 +37,7 @@ export class CoachService {
     }
 
     const school = await this.schoolRepository.findOne({
-      where: { affiliationNumber: coachDto.affiliationNumber },
+      where: { affiliationNumber },
     });
 
     if (!school) {
