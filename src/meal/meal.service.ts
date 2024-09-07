@@ -85,7 +85,7 @@ export class MealService {
       queryValue = id;
     }
 
-    const url = `${backendUrl}api/v1/meal/verify-meal?${queryParam}=${queryValue}`;
+    const url = `${backendUrl}/api/v1/meal/verify-meal?${queryParam}=${queryValue}`;
 
     // Generate QR code
     const qrCode = await QRCode.toDataURL(url);
