@@ -58,4 +58,13 @@ export class MealController {
       throw error;
     }
   }
+
+  @Get('get-remaining-meals')
+  async getRemainingMeals(@Request() req): Promise<ApiResponse<any>> {
+    const mealCount = await this.mealService.getRemainingMeals(
+      req.user.sub,
+      req.user.entity,
+    );
+    return ApiResponse.success('Meal count retrieved', mealCount);
+  }
 }

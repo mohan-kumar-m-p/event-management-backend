@@ -126,4 +126,41 @@ export class MealService {
       await this.coachRepository.save(person as Coach);
     }
   }
+
+  async getRemainingMeals(id: string, entity: string): Promise<any> {
+    let person;
+    switch (entity) {
+      case 'athlete':
+        person = await this.athleteRepository.findOne({
+          where: { registrationId: id },
+          select: ['mealsRemaining'],
+        });
+        if (!person) {
+          throw new NotFoundException('Athlete not found');
+        }
+        break;
+      case 'manager':
+        person = await this.managerRepository.findOne({
+          where: { managerId: id },
+          select: ['mealsRemaining'],
+        });
+        if (!person) {
+          throw new NotFoundException('Manager not found');
+        }
+        break;
+      case 'coach':
+        person = await this.coachRepository.findOne({
+          where: { coachId: id },
+          select: ['mealsRemaining'],
+        });
+        if (!person) {
+          throw new NotFoundException('Coach not found');
+        }
+        break;
+      default:
+        throw new BadRequestException('Invalid entity');
+    }
+
+    return person.mealsRemaining;
+  }
 }
