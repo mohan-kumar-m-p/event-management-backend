@@ -37,7 +37,7 @@ export class MealController {
   }
 
   @UseGuards(RolesGuard([OrganizerRole.MessManager]))
-  @Post('verify-meal')
+  @Get('verify-meal')
   async verifyMeal(
     @Query('registrationId') registrationId?: string,
     @Query('managerId') managerId?: string,
