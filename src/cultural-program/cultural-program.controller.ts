@@ -15,6 +15,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiResponse } from 'src/shared/dto/api-response.dto';
 import { CulturalProgramDto } from './cultural-program.dto';
 import { CulturalProgramService } from './cultural-program.service';
+import { RolesGuard } from 'src/guards/role.guard';
+import { OrganizerRole } from 'src/shared/roles';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('cultural-program')
@@ -48,6 +50,7 @@ export class CulturalProgramController {
   }
 
   @Get()
+  @UseGuards(RolesGuard([OrganizerRole.CulturalProgramCoordinator]))
   async findAll(): Promise<ApiResponse<any>> {
     const culturalPrograms = await this.culturalProgramService.findAll();
     return ApiResponse.success(

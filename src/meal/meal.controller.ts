@@ -59,11 +59,16 @@ export class MealController {
     }
   }
 
-  @Get('get-remaining-meals')
-  async getRemainingMeals(@Request() req): Promise<ApiResponse<any>> {
-    const mealCount = await this.mealService.getRemainingMeals(
+  @Get('get-meal-details')
+  async getMealDetails(@Request() req, @Body() body): Promise<ApiResponse<any>> {
+    let athleteId;
+    if (body && Object.keys(body).length !== 0) {
+      athleteId = body.registrationId;
+    }
+    const mealCount = await this.mealService.getMealDetails(
       req.user.sub,
       req.user.entity,
+      athleteId,
     );
     return ApiResponse.success('Meal count retrieved', mealCount);
   }

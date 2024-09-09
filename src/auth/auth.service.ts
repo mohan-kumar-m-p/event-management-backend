@@ -267,21 +267,87 @@ export class AuthService {
 
         if (!school) {
           throw new UnauthorizedException(
-            `School with phone number ${email} not found`,
+            `School with email ${email} not found`,
           );
         }
 
         school.otp = otp;
         school.otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
+        await this.emailService.sendEmail({
+          to: school.emailId,
+          subject: 'OTP for Login',
+          body: `Your OTP for login is ${otp}`,
+        });
+        // await this.nodeMailService.sendEmail(school.emailId, otp);
+        await this.schoolRepository.save(school);
+        return;
+      } else if (entity === Entity.Manager) {
+        const otp = String(randomInt(100000, 1000000));
+        const manager = await this.managerRepository.findOne({
+          where: { emailId: email },
+        });
+        if (!manager) {
+          throw new UnauthorizedException(
+            `Manager with email ${email} not found`,
+          );
+        }
+
+        manager.otp = otp;
+        manager.otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
         // await this.emailService.sendEmail({
-        //   to: school.emailId,
+        //   to: manager.emailId,
         //   subject: 'OTP for Login',
         //   body: `Your OTP for login is ${otp}`,
         // });
-        await this.nodeMailService.sendEmail(school.emailId, otp);
-        await this.schoolRepository.save(school);
+        await this.nodeMailService.sendEmail(manager.emailId, otp);
+        await this.managerRepository.save(manager);
         return;
-      } else throw new BadRequestException('Invalid entity');
+      } else if (entity === Entity.Coach) {
+        const otp = String(randomInt(100000, 1000000));
+        const coach = await this.coachRepository.findOne({
+          where: { emailId: email },
+        });
+        if (!coach) {
+          throw new UnauthorizedException(
+            `Coach with email ${email} not found`,
+          );
+        }
+
+        coach.otp = otp;
+        coach.otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
+        await this.emailService.sendEmail({
+          to: coach.emailId,
+          subject: 'OTP for Login',
+          body: `Your OTP for login is ${otp}`,
+        });
+        // await this.nodeMailService.sendEmail(coach.emailId, otp);
+        await this.coachRepository.save(coach);
+        return;
+      } else if (entity === Entity.Athlete) {
+        const otp = String(randomInt(100000, 1000000));
+        const athlete = await this.athleteRepository.findOne({
+          where: { emailId: email },
+        });
+        if (!athlete) {
+          throw new UnauthorizedException(
+            `Athlete with email ${email} not found`,
+          );
+        }
+
+        athlete.otp = otp;
+        athlete.otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
+        await this.emailService.sendEmail({
+          to: athlete.emailId,
+          subject: 'OTP for Login',
+          body: `Your OTP for login is ${otp}`,
+        });
+        // await this.nodeMailService.sendEmail(athlete.emailId, otp);
+        await this.athleteRepository.save(athlete);
+        return;
+
+      } else {
+        throw new BadRequestException('Invalid entity');
+      }
     } catch (error) {
       this.logger.error(
         `Error occured while generating OTP for email, ${error}`,
@@ -319,8 +385,77 @@ export class AuthService {
         school.otp = null;
         school.otpExpiry = null;
         await this.schoolRepository.save(school);
-        return school;
-      } else throw new BadRequestException('Invalid entity');
+        return { ...school, entity: Entity.School };
+      } else if (entity === Entity.Coach) {
+        const coach = await this.coachRepository.findOne({
+          where: { emailId: email },
+          relations: ['school'],
+        });
+        if (!coach) {
+          throw new NotFoundException(`Coach with email ${email} not found`);
+        }
+        generatedOtp = coach.otp;
+        if (!generatedOtp) {
+          throw new BadRequestException(
+            'No OTP found for coach, please request to generate a new OTP',
+          );
+        }
+
+        if (generatedOtp !== otp || coach.otpExpiry < new Date()) {
+          throw new UnauthorizedException('Invalid OTP, please try again');
+        }
+
+        coach.otp = null;
+        coach.otpExpiry = null;
+        await this.coachRepository.save(coach);
+        return { ...coach, entity: Entity.Coach };
+      } else if (entity === Entity.Manager) {
+        const manager = await this.managerRepository.findOne({
+          where: { emailId: email },
+          relations: ['school'],
+        });
+        if (!manager) {
+          throw new NotFoundException(`Manager with email ${email} not found`);
+        }
+        generatedOtp = manager.otp;
+        if (!generatedOtp) {
+          throw new BadRequestException(
+            'No OTP found for manager, please request to generate a new OTP',
+          );
+        }
+        if (generatedOtp !== otp || manager.otpExpiry < new Date()) {
+          throw new UnauthorizedException('Invalid OTP, please try again');
+        }
+
+        manager.otp = null;
+        manager.otpExpiry = null;
+        await this.managerRepository.save(manager);
+        return { ...manager, entity: Entity.Manager };
+      } else if (entity === Entity.Athlete) {
+        const athlete = await this.athleteRepository.findOne({
+          where: { emailId: email },
+          relations: ['school'],
+        });
+        if (!athlete) {
+          throw new NotFoundException(`Athlete with email ${email} not found`);
+        }
+        generatedOtp = athlete.otp;
+        if (!generatedOtp) {
+          throw new BadRequestException(
+            'No OTP found for athlete, please request to generate a new OTP',
+          );
+        }
+        if (generatedOtp !== otp || athlete.otpExpiry < new Date()) {
+          throw new UnauthorizedException('Invalid OTP, please try again');
+        }
+
+        athlete.otp = null;
+        athlete.otpExpiry = null;
+        await this.athleteRepository.save(athlete);
+        return { ...athlete, entity: Entity.Athlete };
+      } else {
+        throw new BadRequestException('Invalid entity');
+      }
     } catch (error) {
       this.logger.error(`Error occurred while validating OTP email, ${error}`);
       throw error;
@@ -328,14 +463,49 @@ export class AuthService {
   }
 
   otpEmailLogin(
-    authenticatedUser: Record<string, string>,
+    authenticatedUser: Record<string, any>,
   ): Record<string, string> {
-    const jwtPaylod: any = {
-      sub: authenticatedUser.affiliationNumber,
-      roles: [SchoolRole.School],
-    };
-    return {
-      access_token: this.jwtService.sign(jwtPaylod),
-    };
+    if (authenticatedUser.entity === Entity.School) {
+      const jwtPaylod: any = {
+        sub: authenticatedUser.affiliationNumber,
+        roles: [SchoolRole.School],
+      };
+      return {
+        access_token: this.jwtService.sign(jwtPaylod),
+      };
+    }
+
+    if (authenticatedUser.entity === Entity.Coach) {
+      const jwtPaylod: any = {
+        sub: authenticatedUser.coachId,
+        affiliationNumber: authenticatedUser.school.affiliationNumber,
+        roles: [SchoolRole.Coach],
+      };
+      return {
+        access_token: this.jwtService.sign(jwtPaylod),
+      };
+    }
+
+    if (authenticatedUser.entity === Entity.Manager) {
+      const jwtPaylod: any = {
+        sub: authenticatedUser.managerId,
+        affiliationNumber: authenticatedUser.school.affiliationNumber,
+        roles: [SchoolRole.Manager],
+      };
+      return {
+        access_token: this.jwtService.sign(jwtPaylod),
+      };
+    }
+
+    if (authenticatedUser.entity === Entity.Athlete) {
+      const jwtPaylod: any = {
+        sub: authenticatedUser.registrationId,
+        affiliantionNumber: authenticatedUser.school.affiliationNumber,
+        roles: [SchoolRole.Athlete],
+      };
+      return {
+        access_token: this.jwtService.sign(jwtPaylod),
+      };
+    }
   }
 }

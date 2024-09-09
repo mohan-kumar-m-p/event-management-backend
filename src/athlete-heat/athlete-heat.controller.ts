@@ -1,10 +1,13 @@
 import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiResponse } from 'src/shared/dto/api-response.dto';
+import { RolesGuard } from '../guards/role.guard';
+import { ApiResponse } from '../shared/dto/api-response.dto';
+import { OrganizerRole } from '../shared/roles';
 import { AthleteHeat } from './athlete-heat.entity';
 import { AthleteHeatService } from './athlete-heat.service';
 
 @UseGuards(AuthGuard('jwt'))
+@UseGuards(RolesGuard([OrganizerRole.MeetManager]))
 @Controller('athlete-heat')
 export class AthleteHeatController {
   constructor(private readonly athleteHeatService: AthleteHeatService) {}

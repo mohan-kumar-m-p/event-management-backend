@@ -16,6 +16,14 @@ import { School } from '../school/school.entity';
 import { BaseEntity } from '../shared/base.entity';
 import { CulturalProgram } from '../cultural-program/cultural-program.entity';
 
+const defaulMealDetails = {
+  '2024-09-27': 5,
+  '2024-09-28': 5,
+  '2024-09-29': 5,
+  '2024-09-30': 5,
+  '2024-10-01': 5,
+};
+
 @Entity()
 export class Athlete extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -94,4 +102,7 @@ export class Athlete extends BaseEntity {
   @OneToOne(() => CulturalProgram, (culturalProgram) => culturalProgram.athlete)
   @JoinColumn({ name: 'athleteId' })
   culturalProgram: CulturalProgram;
+
+  @Column({ type: 'json', default: defaulMealDetails })
+  mealDetails: Record<string, any>;
 }

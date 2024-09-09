@@ -14,3 +14,9 @@ export enum SchoolRole {
   Coach = 'coach',
   Athlete = 'athlete',
 }
+
+// meetManager can do all inField activities
+// registrationInCharge can do all CRUD operations for athlete manager coach
+// warden can do all CRUD for accomondations
+// culturalProgramCoordinator can do all CRUD for culturalPrograms
+

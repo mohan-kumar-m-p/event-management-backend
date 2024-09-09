@@ -4,11 +4,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as QRCode from 'qrcode';
 import { Athlete } from 'src/athlete/athlete.entity';
 import { Coach } from 'src/coach/coach.entity';
 import { Manager } from 'src/manager/manager.entity';
 import { Repository } from 'typeorm';
-import * as QRCode from 'qrcode';
 
 @Injectable()
 export class MealService {
@@ -118,6 +118,10 @@ export class MealService {
     }
 
     person.mealsRemaining -= 1;
+    const today = new Date();
+    const todayString = today.toISOString().split('T')[0];
+    person.mealDetails[todayString] -= 1;
+
     if (role === 'athlete') {
       await this.athleteRepository.save(person as Athlete);
     } else if (role === 'manager') {
@@ -127,13 +131,33 @@ export class MealService {
     }
   }
 
-  async getRemainingMeals(id: string, entity: string): Promise<any> {
+  async getMealDetails(
+    id: string,
+    entity: string,
+    athleteId?: string,
+  ): Promise<any> {
+    if (athleteId) {
+      // check if athleteId is valid
+      const athlete = await this.athleteRepository.findOne({
+        where: { registrationId: athleteId },
+      });
+
+      if (!athlete) {
+        throw new NotFoundException('Athlete not found');
+      }
+
+      return {
+        mealsRemaining: athlete.mealsRemaining,
+        mealDetails: athlete.mealDetails,
+      };
+    }
+
     let person;
     switch (entity) {
       case 'athlete':
         person = await this.athleteRepository.findOne({
           where: { registrationId: id },
-          select: ['mealsRemaining'],
+          select: ['mealsRemaining', 'mealDetails'],
         });
         if (!person) {
           throw new NotFoundException('Athlete not found');
@@ -142,7 +166,7 @@ export class MealService {
       case 'manager':
         person = await this.managerRepository.findOne({
           where: { managerId: id },
-          select: ['mealsRemaining'],
+          select: ['mealsRemaining', 'mealDetails'],
         });
         if (!person) {
           throw new NotFoundException('Manager not found');
@@ -151,7 +175,7 @@ export class MealService {
       case 'coach':
         person = await this.coachRepository.findOne({
           where: { coachId: id },
-          select: ['mealsRemaining'],
+          select: ['mealsRemaining', 'mealDetails'],
         });
         if (!person) {
           throw new NotFoundException('Coach not found');
@@ -161,6 +185,9 @@ export class MealService {
         throw new BadRequestException('Invalid entity');
     }
 
-    return person.mealsRemaining;
+    return {
+      mealsRemaining: person.mealsRemaining,
+      mealDetails: person.mealDetails,
+    };
   }
 }

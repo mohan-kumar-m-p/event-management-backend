@@ -7,11 +7,14 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiResponse } from 'src/shared/dto/api-response.dto';
-import { AccommodationService } from './accommodation.service';
 import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '../guards/role.guard';
+import { ApiResponse } from '../shared/dto/api-response.dto';
+import { OrganizerRole } from '../shared/roles';
+import { AccommodationService } from './accommodation.service';
 
 @UseGuards(AuthGuard('jwt'))
+@UseGuards(RolesGuard([OrganizerRole.Warden]))
 @Controller('accommodation')
 export class AccommodationController {
   constructor(private readonly accommodationService: AccommodationService) {}

@@ -9,6 +9,14 @@ import { Accommodation } from '../accommodation/accommodation.entity';
 import { School } from '../school/school.entity';
 import { BaseEntity } from '../shared/base.entity';
 
+const defaulMealDetails = {
+  '2024-09-27': 5,
+  '2024-09-28': 5,
+  '2024-09-29': 5,
+  '2024-09-30': 5,
+  '2024-10-01': 5,
+};
+
 @Entity()
 export class Manager extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -54,4 +62,7 @@ export class Manager extends BaseEntity {
 
   @Column({ type: 'timestamp', nullable: true })
   otpExpiry: Date;
+
+  @Column({ type: 'json', default: defaulMealDetails })
+  mealDetails: Record<string, any>;
 }
