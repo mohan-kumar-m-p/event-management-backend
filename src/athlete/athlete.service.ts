@@ -19,6 +19,7 @@ import { calculateAge } from '../shared/utils/date-utils';
 import { Athlete } from './athlete.entity';
 import { CreateAthleteDto } from './dto/create-athlete.dto';
 import { UpdateAthleteDto } from './dto/update-athlete.dto';
+import { CulturalProgram } from '../cultural-program/cultural-program.entity';
 
 @Injectable()
 export class AthleteService {
@@ -41,7 +42,7 @@ export class AthleteService {
     photo?: Express.Multer.File,
   ): Promise<Athlete> {
     await this.checkUniqueConstraints(
-      athleteDto.phone,
+      athleteDto.emailId,
       athleteDto.aadhaarNumber,
     );
 
@@ -351,7 +352,7 @@ export class AthleteService {
   ): Promise<Athlete> {
     const existingAthlete = await this.findOne(id);
     await this.checkUniqueConstraints(
-      athleteDto.phone || existingAthlete.phone,
+      athleteDto.emailId || existingAthlete.emailId,
       athleteDto.aadhaarNumber || existingAthlete.aadhaarNumber,
       id,
     );
@@ -669,11 +670,11 @@ export class AthleteService {
     }
   }
 
-  // TODO Add cultural events to this too
-  async findAssignedEvents(id: string): Promise<Event[]> {
+  // TODO (DONE) Add cultural events to this too
+  async findAssignedEvents(id: string): Promise<any> {
     const athlete = await this.athleteRepository.findOne({
       where: { registrationId: id },
-      relations: ['events'],
+      relations: ['events', 'culturalPrograms'],
     });
 
     if (!athlete) {
@@ -681,12 +682,62 @@ export class AthleteService {
     }
 
     // Check if the athlete has no events assigned
-    if (!athlete.events || athlete.events.length === 0) {
-      throw new NotFoundException('No events assigned to this athlete');
+    if (
+      (!athlete.events || athlete.events.length === 0) &&
+      (!athlete.culturalPrograms || athlete.culturalPrograms.length === 0)
+    ) {
+      throw new NotFoundException(
+        'No events or cultural programs assigned to this athlete',
+      );
+    }
+
+    type GroupedEvents = {
+      individual: { [key in EventCategory]?: Event[] };
+      group: { [key in EventCategory]?: Event[] };
+      cultural: CulturalProgram[];
+    };
+
+    // Group events by type and then by category
+    const groupedEvents = athlete.events.reduce<GroupedEvents>(
+      (acc, event) => {
+        const categoryKey = event.category as EventCategory;
+        if (event.type === EventType.Individual) {
+          if (!acc.individual[categoryKey]) {
+            acc.individual[categoryKey] = [];
+          }
+          acc.individual[categoryKey].push(event);
+        } else if (event.type === EventType.Group) {
+          if (!acc.group[categoryKey]) {
+            acc.group[categoryKey] = [];
+          }
+          acc.group[categoryKey].push(event);
+        }
+        return acc;
+      },
+      { individual: {}, group: {}, cultural: [] },
+    );
+
+    // Add cultural programs to the groupedEvents
+    groupedEvents.cultural = athlete.culturalPrograms || [];
+
+    // Check if both groups have events
+    const hasIndividualEvents = Object.values(groupedEvents.individual).some(
+      (events) => events.length > 0,
+    );
+    const hasGroupEvents = Object.values(groupedEvents.group).some(
+      (events) => events.length > 0,
+    );
+
+    const hasCulturalPrograms = groupedEvents.cultural.length > 0;
+
+    if (!hasIndividualEvents && !hasGroupEvents && !hasCulturalPrograms) {
+      throw new NotFoundException(
+        'No events or cultural programs assigned to this athlete',
+      );
     }
 
     try {
-      return athlete.events;
+      return groupedEvents;
     } catch (error) {
       throw new BadRequestException('Failed to fetch assigned events');
     }
@@ -834,19 +885,19 @@ export class AthleteService {
   }
 
   private async checkUniqueConstraints(
-    phone: string,
+    emailId: string,
     aadhaarNumber?: string,
     excludeId?: string,
   ) {
-    const phoneExists = await this.athleteRepository.findOne({
-      where: { phone },
+    const emailExists = await this.athleteRepository.findOne({
+      where: { emailId },
     });
 
-    if (phoneExists && phoneExists.registrationId !== excludeId) {
+    if (emailExists && emailExists.registrationId !== excludeId) {
       throw new ConflictException({
-        message: 'Phone number already exists',
+        message: 'Email ID already exists',
         data: {
-          type: 'phoneNumber',
+          type: 'emailId',
         },
       });
     }

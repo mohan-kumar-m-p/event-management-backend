@@ -59,7 +59,7 @@ export class SchoolController {
     );
   }
 
-  // TODO add new endpoint for all events this school has by using school affiliation number from JWT
+  // TODO (DONE) add new endpoint for all events this school has by using school affiliation number from JWT
   @Get(':id/events')
   async getEventsForSchool(@Param('id') id: string): Promise<ApiResponse<any>> {
     const events = await this.schoolService.getEventsForSchool(id);

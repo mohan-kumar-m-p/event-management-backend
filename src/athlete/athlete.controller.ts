@@ -137,9 +137,9 @@ export class AthleteController {
     return ApiResponse.success('Athlete events updated successfully', athlete);
   }
 
-  // TODO Create an new endpoint for get all coaches for this athlete by using the school affiliation number from JWT.Response should be array of objects
-  // TODO Create an new endpoint for get all managers for this athlete by using the school affiliation number from JWT. Response should be array of objects
+  // TODO (DONE) Create an new endpoint for get all coaches for this athlete by using the school affiliation number from JWT.Response should be array of objects
+  // TODO (DONE) Create an new endpoint for get all managers for this athlete by using the school affiliation number from JWT. Response should be array of objects
   // TODO Create a new endpoint for get all events for an athlete that are in past and in future. Response should should be an object of 2 objects, past and future
   // TODO Create a new endpoint for win history for an athelete. Win means 1st, 2nd, or 3rd place. Response object should be an object or 2 objects, individual and group
-  // TODO For athlete we need to get all accommodation details like name and block details and bed number
+  // TODO(DONE) For athlete we need to get all accommodation details like name and block details and bed number
 }

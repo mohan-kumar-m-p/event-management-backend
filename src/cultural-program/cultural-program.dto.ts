@@ -1,5 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { ProgramCategory } from './enum/program-category.enum';
+import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CulturalProgramDto {
   @IsNotEmpty()
@@ -19,8 +18,9 @@ export class CulturalProgramDto {
   time: string;
 
   @IsNotEmpty()
-  @IsString()
-  category: ProgramCategory;
+  @IsArray()
+  @IsString({ each: true })
+  category: string[];
 
   @IsOptional()
   @IsString()

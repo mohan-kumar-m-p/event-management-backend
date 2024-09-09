@@ -4,19 +4,17 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { School } from '../school/school.entity';
 import { BaseEntity } from '../shared/base.entity';
-import { ProgramCategory } from './enum/program-category.enum';
 
 @Entity()
 export class CulturalProgram extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @OneToOne(() => Athlete, (athlete) => athlete.culturalProgram)
+  @ManyToOne(() => Athlete, (athlete) => athlete.culturalPrograms)
   @JoinColumn({ name: 'athleteId' })
   athlete: Athlete;
 
@@ -30,11 +28,8 @@ export class CulturalProgram extends BaseEntity {
   @Column({ type: 'time' })
   time: string;
 
-  @Column({
-    type: 'enum',
-    enum: ProgramCategory,
-  })
-  category: ProgramCategory;
+  @Column()
+  category: string;
 
   @Column({ type: 'text', nullable: true })
   mediaUrl: string;

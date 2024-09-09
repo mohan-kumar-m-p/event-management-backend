@@ -7,14 +7,13 @@ import {
   ManyToMany,
   ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Accommodation } from '../accommodation/accommodation.entity';
+import { CulturalProgram } from '../cultural-program/cultural-program.entity';
 import { Event } from '../event/event.entity';
 import { School } from '../school/school.entity';
 import { BaseEntity } from '../shared/base.entity';
-import { CulturalProgram } from '../cultural-program/cultural-program.entity';
 
 const defaulMealDetails = {
   '2024-09-27': 5,
@@ -99,9 +98,11 @@ export class Athlete extends BaseEntity {
   @OneToMany(() => AthleteHeat, (athleteHeat) => athleteHeat.athlete)
   athleteHeats: AthleteHeat[];
 
-  @OneToOne(() => CulturalProgram, (culturalProgram) => culturalProgram.athlete)
-  @JoinColumn({ name: 'athleteId' })
-  culturalProgram: CulturalProgram;
+  @OneToMany(
+    () => CulturalProgram,
+    (culturalProgram) => culturalProgram.athlete,
+  )
+  culturalPrograms: CulturalProgram[];
 
   @Column({ type: 'json', default: defaulMealDetails })
   mealDetails: Record<string, any>;

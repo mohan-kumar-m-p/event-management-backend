@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   Logger,
   NotFoundException,
@@ -30,6 +31,11 @@ export class ManagerService {
     schoolAffiliationNumber: string,
     photo?: Express.Multer.File,
   ): Promise<Manager> {
+    await this.checkUniqueConstraints(
+      managerDto.emailId,
+      managerDto.aadhaarNumber,
+    );
+
     const affiliationNumber =
       managerDto.affiliationNumber || schoolAffiliationNumber;
 
@@ -213,6 +219,11 @@ export class ManagerService {
   ): Promise<Manager> {
     // Fetch the existing manager from the database
     const existingManager = await this.findOne(id);
+    await this.checkUniqueConstraints(
+      managerDto.emailId || existingManager.emailId,
+      managerDto.aadhaarNumber || existingManager.aadhaarNumber,
+      id,
+    );
     if (!existingManager) {
       throw new NotFoundException(`Manager with ID ${id} not found`);
     }
@@ -291,6 +302,40 @@ export class ManagerService {
         );
       }
       throw error; // Rethrow any other errors
+    }
+  }
+
+  private async checkUniqueConstraints(
+    emailId: string,
+    aadhaarNumber?: string,
+    excludeId?: string,
+  ) {
+    const emailExists = await this.managerRepository.findOne({
+      where: { emailId },
+    });
+
+    if (emailExists && emailExists.managerId !== excludeId) {
+      throw new ConflictException({
+        message: 'Email ID already exists',
+        data: {
+          type: 'emailId',
+        },
+      });
+    }
+
+    if (aadhaarNumber) {
+      const aadhaarExists = await this.managerRepository.findOne({
+        where: { aadhaarNumber },
+      });
+
+      if (aadhaarExists && aadhaarExists.managerId !== excludeId) {
+        throw new ConflictException({
+          message: 'Aadhaar number already exists',
+          data: {
+            type: 'aadhaarNumber',
+          },
+        });
+      }
     }
   }
 }

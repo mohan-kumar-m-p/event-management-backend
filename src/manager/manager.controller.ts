@@ -85,7 +85,4 @@ export class ManagerController {
     await this.managerService.deleteManager(id);
     return ApiResponse.success('Manager deleted successfully');
   }
-
-    // TODO add new endpoint for all events this manager has by using school affiliation number from JWT
-
 }

@@ -28,7 +28,7 @@ export class CulturalProgramService {
     culturalProgramDto: CulturalProgramDto,
     schoolAffiliationNumber: string,
     media?: Express.Multer.File,
-  ): Promise<CulturalProgram> {
+  ): Promise<CulturalProgram[]> {
     const affiliationNumber =
       culturalProgramDto.affiliationNumber || schoolAffiliationNumber;
 
@@ -57,25 +57,36 @@ export class CulturalProgramService {
       s3Data = await this.s3Service.uploadFile(media, 'cultural-program');
     }
 
-    // Prepare the cultural program entity
-    const culturalProgram = this.culturalProgramRepository.create({
-      ...culturalProgramDto,
-      athlete: athlete,
-      school: school,
-      mediaUrl: s3Data?.fileKey || null,
+    // Create a cultural program for each category
+    const culturalPrograms = await Promise.all(
+      culturalProgramDto.category.map(async (category) => {
+        const culturalProgram = this.culturalProgramRepository.create({
+          ...culturalProgramDto,
+          category,
+          athlete: athlete,
+          school: school,
+          mediaUrl: s3Data?.fileKey || null,
+        });
+
+        await this.culturalProgramRepository.save(culturalProgram);
+
+        return {
+          ...culturalProgram,
+          athleteId: culturalProgram.athlete.registrationId,
+          athleteName: culturalProgram.athlete.name,
+          affiliationNumber: culturalProgram.school.affiliationNumber,
+          schoolName: culturalProgram.school.name,
+        };
+      }),
+    );
+
+    // Remove athlete and school from each result
+    culturalPrograms.forEach((result) => {
+      delete result.athlete;
+      delete result.school;
     });
 
-    await this.culturalProgramRepository.save(culturalProgram);
-    const result = {
-      ...culturalProgram,
-      athleteId: culturalProgram.athlete.registrationId,
-      athleteName: culturalProgram.athlete.name,
-      affiliationNumber: culturalProgram.school.affiliationNumber,
-      schoolName: culturalProgram.school.name,
-    };
-    delete result.athlete;
-    delete result.school;
-    return result;
+    return culturalPrograms;
   }
 
   async findAll(): Promise<any[]> {

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   Logger,
   NotFoundException,
@@ -29,6 +30,7 @@ export class CoachService {
     schoolAffiliationNumber: string,
     photo?: Express.Multer.File,
   ): Promise<Coach> {
+    await this.checkUniqueConstraints(coachDto.emailId, coachDto.aadhaarNumber);
     const affiliationNumber =
       coachDto.affiliationNumber || schoolAffiliationNumber;
 
@@ -212,8 +214,13 @@ export class CoachService {
     coachDto: UpdateCoachDto,
     photo?: Express.Multer.File,
   ): Promise<Coach> {
-    // Fetch the existing coach from the database
     const existingCoach = await this.findOne(id);
+    await this.checkUniqueConstraints(
+      coachDto.emailId || existingCoach.emailId,
+      coachDto.aadhaarNumber || existingCoach.aadhaarNumber,
+      id,
+    );
+    // Fetch the existing coach from the database
     if (!existingCoach) {
       throw new NotFoundException(`Coach with ID ${id} not found`);
     }
@@ -294,5 +301,37 @@ export class CoachService {
     }
   }
 
-  // TODO add new endpoint for all events this coach has by using school affiliation number from JWT
+  private async checkUniqueConstraints(
+    emailId: string,
+    aadhaarNumber?: string,
+    excludeId?: string,
+  ) {
+    const emailExists = await this.coachRepository.findOne({
+      where: { emailId },
+    });
+
+    if (emailExists && emailExists.coachId !== excludeId) {
+      throw new ConflictException({
+        message: 'Email ID already exists',
+        data: {
+          type: 'emailId',
+        },
+      });
+    }
+
+    if (aadhaarNumber) {
+      const aadhaarExists = await this.coachRepository.findOne({
+        where: { aadhaarNumber },
+      });
+
+      if (aadhaarExists && aadhaarExists.coachId !== excludeId) {
+        throw new ConflictException({
+          message: 'Aadhaar number already exists',
+          data: {
+            type: 'aadhaarNumber',
+          },
+        });
+      }
+    }
+  }
 }
