@@ -61,8 +61,8 @@ export class AthleteService {
       throw new NotFoundException('School not found');
     }
 
-    // Generate chestNumber from aadhaarNumber (last 5 digits)
-    const chestNumber = athleteDto.aadhaarNumber.slice(-5);
+    // Generate unique chest number
+    const chestNumber = await this.generateUniqueChestNumber();
 
     let s3Data = null;
     if (photo) {
@@ -914,6 +914,20 @@ export class AthleteService {
             type: 'aadhaarNumber',
           },
         });
+      }
+    }
+  }
+
+  private async generateUniqueChestNumber(): Promise<string> {
+    while (true) {
+      // Generate a random 5-digit number
+      const chestNumber = Math.floor(10000 + Math.random() * 90000).toString();
+      // Check if this chest number already exists
+      const existingAthlete = await this.athleteRepository.findOne({
+        where: { chestNumber },
+      });
+      if (!existingAthlete) {
+        return chestNumber;
       }
     }
   }
