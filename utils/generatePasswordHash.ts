@@ -8,3 +8,6 @@ hashedPassword()
 
 // testOrganizer1@gmail.com
 // organizerPassword
+
+// meetManager@gmail.com
+// organizerPassword

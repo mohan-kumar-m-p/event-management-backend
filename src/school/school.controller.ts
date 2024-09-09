@@ -50,4 +50,7 @@ export class SchoolController {
       'Accommodation requirement updated successfully',
     );
   }
+
+    // TODO add new endpoint for all events this school has by using school affiliation number from JWT
+
 }

@@ -669,6 +669,8 @@ export class AthleteService {
     }
   }
 
+
+  // TODO Add cultural events to this too
   async findAssignedEvents(id: string): Promise<Event[]> {
     const athlete = await this.athleteRepository.findOne({
       where: { registrationId: id },

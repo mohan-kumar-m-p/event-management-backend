@@ -293,4 +293,6 @@ export class CoachService {
       throw error;
     }
   }
+
+  // TODO add new endpoint for all events this coach has by using school affiliation number from JWT
 }
