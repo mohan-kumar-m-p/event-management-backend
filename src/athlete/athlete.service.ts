@@ -669,7 +669,6 @@ export class AthleteService {
     }
   }
 
-
   // TODO Add cultural events to this too
   async findAssignedEvents(id: string): Promise<Event[]> {
     const athlete = await this.athleteRepository.findOne({
@@ -689,20 +688,8 @@ export class AthleteService {
     try {
       return athlete.events;
     } catch (error) {
-      throw new BadRequestException('Failed to unassign events');
+      throw new BadRequestException('Failed to fetch assigned events');
     }
-  }
-
-  async getQualifiedAthletesByRound(id: string): Promise<Athlete[]> {
-    console.log(`The round Id passed to the service is: ${id}`);
-    const round = await this.roundRepository.findOne({
-      where: { roundId: id },
-      relations: ['event'],
-    });
-    const athletes = await this.athleteRepository.find({
-      where: { events: { eventId: round.event.eventId } },
-    });
-    return athletes;
   }
 
   async deleteAthlete(id: string): Promise<ApiResponse<any>> {

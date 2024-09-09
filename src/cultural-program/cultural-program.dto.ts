@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { ProgramCategory } from './program-category.enum';
+import { ProgramCategory } from './enum/program-category.enum';
 
 export class CulturalProgramDto {
   @IsNotEmpty()
@@ -9,6 +9,14 @@ export class CulturalProgramDto {
   @IsOptional()
   @IsString()
   affiliationNumber: string;
+
+  @IsNotEmpty()
+  @IsString()
+  date: string;
+
+  @IsNotEmpty()
+  @IsString()
+  time: string;
 
   @IsNotEmpty()
   @IsString()

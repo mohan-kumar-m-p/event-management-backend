@@ -6,6 +6,7 @@ import { Manager } from 'src/manager/manager.entity';
 import { Repository } from 'typeorm';
 import { TransportDetailsDto } from './dto/transport-details.dto';
 import { School } from './school.entity';
+import { Event } from '../event/event.entity';
 
 @Injectable()
 export class SchoolService {
@@ -115,5 +116,55 @@ export class SchoolService {
     }
     school.accommodationRequired = accommodationRequired.toString();
     return this.schoolRepository.save(school);
+  }
+
+  async getEventsForSchool(id: string): Promise<Event[]> {
+    const school = await this.schoolRepository.findOne({
+      where: { affiliationNumber: id },
+      relations: ['athletes', 'athletes.events'],
+    });
+
+    if (!school) {
+      throw new NotFoundException(`School with ID ${id} not found`);
+    }
+    const schoolEvents = school.athletes.flatMap((athlete) => athlete.events);
+    if (schoolEvents.length === 0) {
+      throw new NotFoundException(
+        `No events found for school with affiliation number ${id}`,
+      );
+    }
+    return schoolEvents;
+  }
+
+  async getCoachesForSchool(id: string): Promise<Coach[]> {
+    const school = await this.schoolRepository.findOne({
+      where: { affiliationNumber: id },
+      relations: ['coaches'],
+    });
+    if (!school) {
+      throw new NotFoundException(`School with ID ${id} not found`);
+    }
+    if (school.coaches.length === 0) {
+      throw new NotFoundException(
+        `No coaches found for school with affiliation number ${id}`,
+      );
+    }
+    return school.coaches;
+  }
+
+  async getManagersForSchool(id: string): Promise<Manager[]> {
+    const school = await this.schoolRepository.findOne({
+      where: { affiliationNumber: id },
+      relations: ['managers'],
+    });
+    if (!school) {
+      throw new NotFoundException(`School with ID ${id} not found`);
+    }
+    if (school.managers.length === 0) {
+      throw new NotFoundException(
+        `No managers found for school with affiliation number ${id}`,
+      );
+    }
+    return school.managers;
   }
 }

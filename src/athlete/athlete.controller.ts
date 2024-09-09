@@ -110,15 +110,6 @@ export class AthleteController {
     );
   }
 
-  @Get(':id/athletes')
-  async getQualifiedAthletesByRound(
-    @Param('id') roundId: string,
-  ): Promise<ApiResponse<any>> {
-    const athletes =
-      await this.athleteService.getQualifiedAthletesByRound(roundId);
-    return ApiResponse.success('Rounds fetched successfully', athletes);
-  }
-
   @Delete(':id/events')
   async unassignEvents(
     @Param('id') athleteId: string,
