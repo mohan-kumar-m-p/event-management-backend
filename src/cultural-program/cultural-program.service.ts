@@ -99,4 +99,18 @@ export class CulturalProgramService {
     });
     return result;
   }
+
+  async findAllByStudent(registrationId: string): Promise<any[]> {
+    const programs = await this.culturalProgramRepository.find({
+      where: { athlete: { registrationId } },
+    });
+
+    if (!programs) {
+      throw new NotFoundException(
+        `No cultural programs found for student with Id ${registrationId}`,
+      );
+    }
+
+    return programs;
+  }
 }

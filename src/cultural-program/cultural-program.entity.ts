@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { School } from '../school/school.entity';
 import { BaseEntity } from '../shared/base.entity';
-import { ProgramCategory } from './program-category.enum';
+import { ProgramCategory } from './enum/program-category.enum';
 
 @Entity()
 export class CulturalProgram extends BaseEntity {
@@ -23,6 +23,12 @@ export class CulturalProgram extends BaseEntity {
   @ManyToOne(() => School, (school) => school.athletes)
   @JoinColumn({ name: 'affiliationNumber' })
   school: School;
+
+  @Column({ type: 'date' })
+  date: Date;
+
+  @Column({ type: 'time' })
+  time: string;
 
   @Column({
     type: 'enum',

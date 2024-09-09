@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Patch, Put, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiResponse } from 'src/shared/dto/api-response.dto';
 import { TransportDetailsDto } from './dto/transport-details.dto';
@@ -51,6 +59,26 @@ export class SchoolController {
     );
   }
 
-    // TODO add new endpoint for all events this school has by using school affiliation number from JWT
+  // TODO add new endpoint for all events this school has by using school affiliation number from JWT
+  @Get(':id/events')
+  async getEventsForSchool(@Param('id') id: string): Promise<ApiResponse<any>> {
+    const events = await this.schoolService.getEventsForSchool(id);
+    return ApiResponse.success('Events fetched successfully', events);
+  }
 
+  @Get(':id/coaches')
+  async getCoachesForSchool(
+    @Param('id') id: string,
+  ): Promise<ApiResponse<any>> {
+    const coaches = await this.schoolService.getCoachesForSchool(id);
+    return ApiResponse.success('Coaches fetched successfully', coaches);
+  }
+
+  @Get(':id/managers')
+  async getManagersForSchool(
+    @Param('id') id: string,
+  ): Promise<ApiResponse<any>> {
+    const managers = await this.schoolService.getManagersForSchool(id);
+    return ApiResponse.success('Managers fetched successfully', managers);
+  }
 }

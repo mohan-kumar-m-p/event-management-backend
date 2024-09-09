@@ -15,7 +15,7 @@ export class EventService {
   async findAll(): Promise<Event[]> {
     const events = await this.eventRepository.find({
       where: {
-        sportGroup: EventSportGroup.Swimming,
+        sportGroup: EventSportGroup.Athletics,
       },
     });
     if (!events) {
@@ -38,7 +38,7 @@ export class EventService {
     const individualEvents = await this.eventRepository.find({
       where: {
         type: EventType.Individual,
-        sportGroup: EventSportGroup.Swimming,
+        sportGroup: EventSportGroup.Athletics,
       },
     });
 
@@ -63,7 +63,7 @@ export class EventService {
 
   async findGroupEvents(): Promise<{ [key: string]: Event[] }> {
     const groupEvents = await this.eventRepository.find({
-      where: { type: EventType.Group, sportGroup: EventSportGroup.Swimming },
+      where: { type: EventType.Group, sportGroup: EventSportGroup.Athletics },
     });
 
     if (!groupEvents || groupEvents.length === 0) {
