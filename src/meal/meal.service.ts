@@ -127,7 +127,9 @@ export class MealService {
     const affiliationNumber = person.school.affiliationNumber;
     const isEligible = await this.checkIfEligibleForMeal(affiliationNumber);
     if (!isEligible) {
-      throw new BadRequestException(`Not eligible for meal since school with affiliation number ${affiliationNumber} has not paid`); 
+      throw new BadRequestException(
+        `Not eligible for meal since school with affiliation number ${affiliationNumber} has not paid`,
+      );
     }
 
     if (person.mealsRemaining <= 0) {
@@ -190,7 +192,7 @@ export class MealService {
       if (userEntity === 'athlete') {
         person = await this.athleteRepository.findOne({
           where: { registrationId: userId },
-          select: ['mealsRemaining', 'mealDetails'],
+          relations: ['school'],
         });
         if (!person) {
           throw new NotFoundException(`Athlete with ID ${userId} not found`);
@@ -198,7 +200,7 @@ export class MealService {
       } else if (userEntity === 'manager') {
         person = await this.managerRepository.findOne({
           where: { managerId: userId },
-          select: ['mealsRemaining', 'mealDetails'],
+          relations: ['school'],
         });
         if (!person) {
           throw new NotFoundException(`Manager with ID ${userId} not found`);
@@ -206,13 +208,20 @@ export class MealService {
       } else if (userEntity === 'coach') {
         person = await this.coachRepository.findOne({
           where: { coachId: userId },
-          select: ['mealsRemaining', 'mealDetails'],
+          relations: ['school'],
         });
         if (!person) {
           throw new NotFoundException(`Coach with ID ${userId} not found`);
         }
       }
 
+      const affiliationNumber = person.school.affiliationNumber;
+      const isEligible = await this.checkIfEligibleForMeal(affiliationNumber);
+      if (!isEligible) {
+        throw new BadRequestException(
+          `Not eligible for meal since school with affiliation number ${affiliationNumber} has not paid`,
+        );
+      }
       return {
         mealsRemaining: person.mealsRemaining,
         mealDetails: person.mealDetails,
@@ -224,7 +233,7 @@ export class MealService {
       case 'athlete':
         person = await this.athleteRepository.findOne({
           where: { registrationId: id },
-          select: ['mealsRemaining', 'mealDetails'],
+          relations: ['school'],
         });
         if (!person) {
           throw new NotFoundException('Athlete not found');
@@ -233,7 +242,7 @@ export class MealService {
       case 'manager':
         person = await this.managerRepository.findOne({
           where: { managerId: id },
-          select: ['mealsRemaining', 'mealDetails'],
+          relations: ['school'],
         });
         if (!person) {
           throw new NotFoundException('Manager not found');
@@ -242,7 +251,7 @@ export class MealService {
       case 'coach':
         person = await this.coachRepository.findOne({
           where: { coachId: id },
-          select: ['mealsRemaining', 'mealDetails'],
+          relations: ['school'],
         });
         if (!person) {
           throw new NotFoundException('Coach not found');
@@ -250,6 +259,14 @@ export class MealService {
         break;
       default:
         throw new BadRequestException('Invalid entity');
+    }
+
+    const affiliationNumber = person.school.affiliationNumber;
+    const isEligible = await this.checkIfEligibleForMeal(affiliationNumber);
+    if (!isEligible) {
+      throw new BadRequestException(
+        `Not eligible for meal since school with affiliation number ${affiliationNumber} has not paid`,
+      );
     }
 
     return {

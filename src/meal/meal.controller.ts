@@ -77,15 +77,6 @@ export class MealController {
     @Request() req,
     @Body() body,
   ): Promise<ApiResponse<any>> {
-    const affiliationNumber = req.user.affiliationNumber;
-    const isEligible =
-      await this.mealService.checkIfEligibleForMeal(affiliationNumber);
-
-    if (!isEligible) {
-      throw new BadRequestException(
-        `Not eligible for meal since school with affiliation number ${affiliationNumber} has not paid`,
-      );
-    }
 
     let userId, userEntity;
     if (body && Object.keys(body).length !== 0) {
@@ -102,6 +93,7 @@ export class MealController {
         throw new NotFoundException('Invalid request');
       }
     }
+
     const mealCount = await this.mealService.getMealDetails(
       req.user.sub,
       req.user.roles[0],
