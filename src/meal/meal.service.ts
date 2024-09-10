@@ -127,7 +127,7 @@ export class MealService {
     const affiliationNumber = person.school.affiliationNumber;
     const isEligible = await this.checkIfEligibleForMeal(affiliationNumber);
     if (!isEligible) {
-      throw new BadRequestException('Not eligible for meal');
+      throw new BadRequestException(`Not eligible for meal since school with affiliation number ${affiliationNumber} has not paid`); 
     }
 
     if (person.mealsRemaining <= 0) {

@@ -83,7 +83,7 @@ export class MealController {
 
     if (!isEligible) {
       throw new BadRequestException(
-        'Not eligible for meal since affiliated school has not made a payment',
+        `Not eligible for meal since school with affiliation number ${affiliationNumber} has not paid`,
       );
     }
 
