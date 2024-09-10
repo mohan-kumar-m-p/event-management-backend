@@ -23,6 +23,5 @@ jobs:
             cd event-management-backend/
             git pull origin main
             npm install
-            rm -rf dist/
             npm run build
             pm2 restart SPORTS-EVENT
