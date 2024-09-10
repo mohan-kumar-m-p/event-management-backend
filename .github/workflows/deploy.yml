@@ -24,4 +24,5 @@ jobs:
             git pull origin master
             npm install
             npm run build
-            pm2 restart SPORTS-EVENT
+            pm2 restart SPORTS-EVENT --update-env
+            pm2 save
