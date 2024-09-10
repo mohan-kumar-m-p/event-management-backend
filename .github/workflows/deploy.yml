@@ -21,7 +21,7 @@ jobs:
           key: ${{ secrets.EC2_SECRET }}
           script: |
             cd event-management-backend/
-            git pull origin main
+            git pull origin master
             npm install
             npm run build
             pm2 restart SPORTS-EVENT
