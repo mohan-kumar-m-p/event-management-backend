@@ -240,7 +240,7 @@ export class AthleteService {
     const athleteAge = calculateAge(athlete.dob);
 
     let athleteGroup;
-    if (athleteAge > 19) {
+    if (athleteAge >= 19) {
       throw new BadRequestException('Athlete is over 19 and is not eligible');
     } else if (athleteAge < 11) {
       athleteGroup = [
