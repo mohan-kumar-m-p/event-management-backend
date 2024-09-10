@@ -94,4 +94,11 @@ export class MealController {
     );
     return ApiResponse.success('Meal count retrieved', mealCount);
   }
+
+  @UseGuards(RolesGuard([OrganizerRole.MessManager]))
+  @Get('get-total-meal-summary')
+  async getTotalMealDetails(): Promise<ApiResponse<any>> {
+    const summary = await this.mealService.getTotalMealsSummary();
+    return ApiResponse.success('Meal summary retrieved', summary);
+  }
 }

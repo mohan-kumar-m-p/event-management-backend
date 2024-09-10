@@ -5,11 +5,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as QRCode from 'qrcode';
-import { Athlete } from 'src/athlete/athlete.entity';
-import { Coach } from 'src/coach/coach.entity';
-import { Manager } from 'src/manager/manager.entity';
-import { School } from 'src/school/school.entity';
 import { Repository } from 'typeorm';
+import { Athlete } from '../athlete/athlete.entity';
+import { Coach } from '../coach/coach.entity';
+import { Manager } from '../manager/manager.entity';
+import { School } from '../school/school.entity';
+import { MealSummary } from './mealSummary.entity';
 
 @Injectable()
 export class MealService {
@@ -22,6 +23,8 @@ export class MealService {
     private readonly coachRepository: Repository<Coach>,
     @InjectRepository(School)
     private readonly schoolRepository: Repository<School>,
+    @InjectRepository(MealSummary)
+    private readonly mealSummaryRepository: Repository<MealSummary>,
   ) {}
 
   async generateQRCode(
@@ -134,12 +137,31 @@ export class MealService {
     person.mealsRemaining -= 1;
     const today = new Date();
     const todayString = today.toISOString().split('T')[0];
+    if (!person.mealDetails[todayString]) {
+      throw new BadRequestException('No meal details found for today');
+    }
     person.mealDetails[todayString] -= 1;
     const result = {
       name: person.name,
       entity: role,
       mealsRemaining: person.mealsRemaining,
+      mealDetails: person.mealDetails,
     };
+    const todayWithoutTime = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+    ); // Get the date without time
+    const mealSummary = await this.mealSummaryRepository.findOne({
+      where: { date: todayWithoutTime },
+    });
+
+    if (!mealSummary) {
+      throw new NotFoundException('Meal summary for today not found');
+    }
+
+    mealSummary.mealsConsumed += 1; // Increment the mealsConsumed count
+    await this.mealSummaryRepository.save(mealSummary);
 
     if (role === 'athlete') {
       await this.athleteRepository.save(person as Athlete);
@@ -214,6 +236,24 @@ export class MealService {
       mealsRemaining: person.mealsRemaining,
       mealDetails: person.mealDetails,
     };
+  }
+
+  async getTotalMealsSummary(): Promise<any> {
+    const mealSummary = await this.mealSummaryRepository.find();
+
+    if (!mealSummary || mealSummary.length === 0) {
+      throw new NotFoundException('No meal summary found');
+    }
+
+    const result = mealSummary.reduce((acc, meal) => {
+      const dateKey = meal.date.toString().split('T')[0]; // Convert the date to 'YYYY-MM-DD' format
+      acc[dateKey] = {
+        totalMeals: meal.totalMeals,
+        mealsConsumed: meal.mealsConsumed,
+      };
+      return acc;
+    }, {});
+    return result;
   }
 
   async checkIfEligibleForMeal(affiliationNumber: string): Promise<any> {
