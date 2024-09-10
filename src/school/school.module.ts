@@ -7,8 +7,12 @@ import { Athlete } from 'src/athlete/athlete.entity';
 import { Manager } from 'src/manager/manager.entity';
 import { Coach } from 'src/coach/coach.entity';
 import { Event } from 'src/event/event.entity';
+import { SharedModule } from 'src/shared/shared.module';
 @Module({
-  imports: [TypeOrmModule.forFeature([School, Athlete, Manager, Coach, Event])],
+  imports: [
+    TypeOrmModule.forFeature([School, Athlete, Manager, Coach, Event]),
+    SharedModule,
+  ],
   providers: [SchoolService],
   controllers: [SchoolController],
 })

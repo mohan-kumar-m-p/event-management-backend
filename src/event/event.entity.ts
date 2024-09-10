@@ -47,6 +47,12 @@ export class Event extends BaseEntity {
   @Column({ nullable: true })
   date: Date;
 
+  @Column({ default: false })
+  completed: boolean;
+
+  @Column({ nullable: true, type: 'json' })
+  winners: Record<string, any>;
+
   @ManyToMany(() => Athlete, (athlete) => athlete.events)
   athletes: Athlete[];
 

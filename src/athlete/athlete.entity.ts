@@ -15,7 +15,7 @@ import { Event } from '../event/event.entity';
 import { School } from '../school/school.entity';
 import { BaseEntity } from '../shared/base.entity';
 
-const defaulMealDetails = {
+const defaultMealDetails = {
   '2024-09-27': 5,
   '2024-09-28': 5,
   '2024-09-29': 5,
@@ -104,6 +104,6 @@ export class Athlete extends BaseEntity {
   )
   culturalPrograms: CulturalProgram[];
 
-  @Column({ type: 'json', default: defaulMealDetails })
+  @Column({ type: 'json', default: defaultMealDetails })
   mealDetails: Record<string, any>;
 }

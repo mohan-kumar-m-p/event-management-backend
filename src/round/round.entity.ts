@@ -32,6 +32,9 @@ export class Round extends BaseEntity {
   @Column({ nullable: true, type: 'time' })
   time: string;
 
+  @Column({ default: false })
+  completed: boolean;
+
   @OneToMany(() => Heat, (heat) => heat.round)
   heats: Heat[];
 }

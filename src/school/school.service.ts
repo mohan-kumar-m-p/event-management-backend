@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Athlete } from 'src/athlete/athlete.entity';
 import { Coach } from 'src/coach/coach.entity';
@@ -7,9 +7,12 @@ import { Repository } from 'typeorm';
 import { TransportDetailsDto } from './dto/transport-details.dto';
 import { School } from './school.entity';
 import { Event } from '../event/event.entity';
+import { S3Service } from '../shared/services/s3.service';
 
 @Injectable()
 export class SchoolService {
+  private readonly logger = new Logger(SchoolService.name);
+
   constructor(
     @InjectRepository(School)
     private readonly schoolRepository: Repository<School>,
@@ -21,6 +24,7 @@ export class SchoolService {
     private readonly coachRepository: Repository<Coach>,
     @InjectRepository(Event)
     private readonly eventRepository: Repository<Event>,
+    private readonly s3Service: S3Service,
   ) {}
 
   async findAll(): Promise<any[]> {
@@ -149,7 +153,43 @@ export class SchoolService {
         `No coaches found for school with affiliation number ${id}`,
       );
     }
-    return school.coaches;
+
+    const result = await Promise.all(
+      school.coaches.map(async (coach) => {
+        const transformedCoach: Record<string, any> = {
+          ...coach,
+          affiliationNumber: id,
+          schoolName: school.name,
+          accommodationId: coach.accommodation?.accommodationId || null,
+          accommodationName: coach.accommodation?.name || null,
+          blockname: coach.accommodation?.block.name || null,
+        };
+        if (coach.photoUrl) {
+          try {
+            const bucketName = process.env.S3_BUCKET_NAME;
+            const fileData = await this.s3Service.getFile(
+              bucketName,
+              coach.photoUrl,
+            );
+            const base64Image = fileData.Body.toString('base64');
+            transformedCoach.photo = `data:${fileData.ContentType};base64,${base64Image}`;
+          } catch (error) {
+            this.logger.error(
+              `Error occurred while retrieving coach's photo from S3: ${error.message}`,
+            );
+            transformedCoach.photo = null;
+          }
+        } else {
+          transformedCoach.photo = null; // No photoUrl in DB
+        }
+
+        delete transformedCoach.school;
+        delete transformedCoach.accommodation;
+
+        return transformedCoach;
+      }),
+    );
+    return result as Coach[];
   }
 
   async getManagersForSchool(id: string): Promise<Manager[]> {
@@ -165,6 +205,42 @@ export class SchoolService {
         `No managers found for school with affiliation number ${id}`,
       );
     }
-    return school.managers;
+
+    const result = await Promise.all(
+      school.managers.map(async (manager) => {
+        const transformedManager: Record<string, any> = {
+          ...manager,
+          affiliationNumber: id,
+          schoolName: school.name,
+          accommodationId: manager.accommodation?.accommodationId || null,
+          accommodationName: manager.accommodation?.name || null,
+          blockname: manager.accommodation?.block.name || null,
+        };
+        if (manager.photoUrl) {
+          try {
+            const bucketName = process.env.S3_BUCKET_NAME;
+            const fileData = await this.s3Service.getFile(
+              bucketName,
+              manager.photoUrl,
+            );
+            const base64Image = fileData.Body.toString('base64');
+            transformedManager.photo = `data:${fileData.ContentType};base64,${base64Image}`;
+          } catch (error) {
+            this.logger.error(
+              `Error occurred while retrieving manager's photo from S3: ${error.message}`,
+            );
+            transformedManager.photo = null;
+          }
+        } else {
+          transformedManager.photo = null; // No photoUrl in DB
+        }
+
+        delete transformedManager.school;
+        delete transformedManager.accommodation;
+
+        return transformedManager;
+      }),
+    );
+    return result as Manager[];
   }
 }

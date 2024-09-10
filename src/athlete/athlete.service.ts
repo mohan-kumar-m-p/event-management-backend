@@ -265,7 +265,7 @@ export class AthleteService {
       where: {
         category: In(athleteGroup),
         gender: athlete.gender,
-        sportGroup: EventSportGroup.Swimming,
+        sportGroup: EventSportGroup.Athletics,
       },
     });
 
