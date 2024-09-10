@@ -8,6 +8,7 @@ import * as QRCode from 'qrcode';
 import { Athlete } from 'src/athlete/athlete.entity';
 import { Coach } from 'src/coach/coach.entity';
 import { Manager } from 'src/manager/manager.entity';
+import { School } from 'src/school/school.entity';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -19,6 +20,8 @@ export class MealService {
     private readonly managerRepository: Repository<Manager>,
     @InjectRepository(Coach)
     private readonly coachRepository: Repository<Coach>,
+    @InjectRepository(School)
+    private readonly schoolRepository: Repository<School>,
   ) {}
 
   async generateQRCode(
@@ -100,17 +103,28 @@ export class MealService {
     if (role === 'athlete') {
       person = await this.athleteRepository.findOne({
         where: { registrationId: id },
+        relations: ['school'],
       });
     } else if (role === 'manager') {
       person = await this.managerRepository.findOne({
         where: { managerId: id },
+        relations: ['school'],
       });
     } else if (role === 'coach') {
-      person = await this.coachRepository.findOne({ where: { coachId: id } });
+      person = await this.coachRepository.findOne({
+        where: { coachId: id },
+        relations: ['school'],
+      });
     }
 
     if (!person) {
       throw new NotFoundException(`${role} not found`);
+    }
+
+    const affiliationNumber = person.school.affiliationNumber;
+    const isEligible = await this.checkIfEligibleForMeal(affiliationNumber);
+    if (!isEligible) {
+      throw new BadRequestException('Not eligible for meal');
     }
 
     if (person.mealsRemaining <= 0) {
@@ -118,7 +132,7 @@ export class MealService {
     }
 
     person.mealsRemaining -= 1;
-    const today = new Date('2024-09-28');
+    const today = new Date();
     const todayString = today.toISOString().split('T')[0];
     person.mealDetails[todayString] -= 1;
     const result = {
@@ -200,5 +214,12 @@ export class MealService {
       mealsRemaining: person.mealsRemaining,
       mealDetails: person.mealDetails,
     };
+  }
+
+  async checkIfEligibleForMeal(affiliationNumber: string): Promise<any> {
+    const school = await this.schoolRepository.findOne({
+      where: { affiliationNumber: affiliationNumber },
+    });
+    return school.isPaid === 'true';
   }
 }

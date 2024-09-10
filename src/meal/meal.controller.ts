@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -24,13 +25,21 @@ export class MealController {
     @Request() req,
     @Body() body?,
   ): Promise<ApiResponse<any>> {
+    const affiliationNumber = req.user.affiliationNumber;
+    const isEligible =
+      await this.mealService.checkIfEligibleForMeal(affiliationNumber);
+
+    if (!isEligible) {
+      throw new BadRequestException('Not eligible for meal');
+    }
+
     let athleteId;
     if (body && Object.keys(body).length !== 0) {
       athleteId = body.registrationId;
     }
     const qrCode = await this.mealService.generateQRCode(
       req.user.sub,
-      req.user.entity,
+      req.user.roles[0],
       athleteId,
     );
     return ApiResponse.success('QR Code generated successfully', qrCode);
@@ -66,13 +75,21 @@ export class MealController {
     @Request() req,
     @Body() body,
   ): Promise<ApiResponse<any>> {
+    const affiliationNumber = req.user.affiliationNumber;
+    const isEligible =
+      await this.mealService.checkIfEligibleForMeal(affiliationNumber);
+
+    if (!isEligible) {
+      throw new BadRequestException('Not eligible for meal');
+    }
+
     let athleteId;
     if (body && Object.keys(body).length !== 0) {
       athleteId = body.registrationId;
     }
     const mealCount = await this.mealService.getMealDetails(
       req.user.sub,
-      req.user.entity,
+      req.user.roles[0],
       athleteId,
     );
     return ApiResponse.success('Meal count retrieved', mealCount);

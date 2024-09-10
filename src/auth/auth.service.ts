@@ -500,7 +500,7 @@ export class AuthService {
     if (authenticatedUser.entity === Entity.Athlete) {
       const jwtPaylod: any = {
         sub: authenticatedUser.registrationId,
-        affiliantionNumber: authenticatedUser.school.affiliationNumber,
+        affiliationNumber: authenticatedUser.school.affiliationNumber,
         roles: [SchoolRole.Athlete],
       };
       return {
