@@ -18,7 +18,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EVENT_SECRET }}
+          key: ${{ secrets.EC2_SECRET }}
           script: |
             cd event-management-backend/
             git pull origin main
