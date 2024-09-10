@@ -44,23 +44,28 @@ export class MealController {
     @Query('coachId') coachId?: string,
   ): Promise<ApiResponse<any>> {
     try {
+      let result;
       if (registrationId) {
-        await this.mealService.verifyMeal(registrationId, 'athlete');
+        result = await this.mealService.verifyMeal(registrationId, 'athlete');
       } else if (managerId) {
-        await this.mealService.verifyMeal(managerId, 'manager');
+        result = await this.mealService.verifyMeal(managerId, 'manager');
       } else if (coachId) {
-        await this.mealService.verifyMeal(coachId, 'coach');
+        result = await this.mealService.verifyMeal(coachId, 'coach');
       } else {
         throw new NotFoundException('Invalid request');
       }
-      return ApiResponse.success('Meal verified and counted');
+      return ApiResponse.success('Meal verified and counted', result);
     } catch (error) {
       throw error;
     }
   }
 
+  // to be used by athlete/manager/coach to get their meal details or by manager/coach to get the meal details of the athlete they are managing
   @Get('get-meal-details')
-  async getMealDetails(@Request() req, @Body() body): Promise<ApiResponse<any>> {
+  async getMealDetails(
+    @Request() req,
+    @Body() body,
+  ): Promise<ApiResponse<any>> {
     let athleteId;
     if (body && Object.keys(body).length !== 0) {
       athleteId = body.registrationId;

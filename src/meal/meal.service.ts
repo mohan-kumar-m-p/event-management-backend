@@ -95,7 +95,7 @@ export class MealService {
   async verifyMeal(
     id: string,
     role: 'athlete' | 'manager' | 'coach',
-  ): Promise<void> {
+  ): Promise<any> {
     let person;
     if (role === 'athlete') {
       person = await this.athleteRepository.findOne({
@@ -118,16 +118,27 @@ export class MealService {
     }
 
     person.mealsRemaining -= 1;
-    const today = new Date();
+    const today = new Date('2024-09-28');
     const todayString = today.toISOString().split('T')[0];
     person.mealDetails[todayString] -= 1;
+    const result = {
+      name: person.name,
+      entity: role,
+      mealsRemaining: person.mealsRemaining,
+    };
 
     if (role === 'athlete') {
       await this.athleteRepository.save(person as Athlete);
+      return {
+        ...result,
+        chestNumber: person.chestNumber,
+      };
     } else if (role === 'manager') {
       await this.managerRepository.save(person as Manager);
+      return result;
     } else if (role === 'coach') {
       await this.coachRepository.save(person as Coach);
+      return result;
     }
   }
 
