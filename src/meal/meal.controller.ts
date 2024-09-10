@@ -30,7 +30,9 @@ export class MealController {
       await this.mealService.checkIfEligibleForMeal(affiliationNumber);
 
     if (!isEligible) {
-      throw new BadRequestException('Not eligible for meal since affiliated school has not made a payment');
+      throw new BadRequestException(
+        'Not eligible for meal since affiliated school has not made a payment',
+      );
     }
 
     let athleteId;
@@ -80,17 +82,31 @@ export class MealController {
       await this.mealService.checkIfEligibleForMeal(affiliationNumber);
 
     if (!isEligible) {
-      throw new BadRequestException('Not eligible for meal since affiliated school has not made a payment');
+      throw new BadRequestException(
+        'Not eligible for meal since affiliated school has not made a payment',
+      );
     }
 
-    let athleteId;
+    let userId, userEntity;
     if (body && Object.keys(body).length !== 0) {
-      athleteId = body.registrationId;
+      if (body.registrationId) {
+        userId = body.registrationId;
+        userEntity = 'athlete';
+      } else if (body.managerId) {
+        userId = body.managerId;
+        userEntity = 'manager';
+      } else if (body.coachId) {
+        userId = body.coachId;
+        userEntity = 'coach';
+      } else {
+        throw new NotFoundException('Invalid request');
+      }
     }
     const mealCount = await this.mealService.getMealDetails(
       req.user.sub,
       req.user.roles[0],
-      athleteId,
+      userId,
+      userEntity,
     );
     return ApiResponse.success('Meal count retrieved', mealCount);
   }

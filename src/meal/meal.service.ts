@@ -181,21 +181,41 @@ export class MealService {
   async getMealDetails(
     id: string,
     entity: string,
-    athleteId?: string,
+    userId?: string,
+    userEntity?: string,
   ): Promise<any> {
-    if (athleteId) {
-      // check if athleteId is valid
-      const athlete = await this.athleteRepository.findOne({
-        where: { registrationId: athleteId },
-      });
-
-      if (!athlete) {
-        throw new NotFoundException('Athlete not found');
+    if (userId) {
+      let person;
+      // check if userId is valid
+      if (userEntity === 'athlete') {
+        person = await this.athleteRepository.findOne({
+          where: { registrationId: userId },
+          select: ['mealsRemaining', 'mealDetails'],
+        });
+        if (!person) {
+          throw new NotFoundException(`Athlete with ID ${userId} not found`);
+        }
+      } else if (userEntity === 'manager') {
+        person = await this.managerRepository.findOne({
+          where: { managerId: userId },
+          select: ['mealsRemaining', 'mealDetails'],
+        });
+        if (!person) {
+          throw new NotFoundException(`Manager with ID ${userId} not found`);
+        }
+      } else if (userEntity === 'coach') {
+        person = await this.coachRepository.findOne({
+          where: { coachId: userId },
+          select: ['mealsRemaining', 'mealDetails'],
+        });
+        if (!person) {
+          throw new NotFoundException(`Coach with ID ${userId} not found`);
+        }
       }
 
       return {
-        mealsRemaining: athlete.mealsRemaining,
-        mealDetails: athlete.mealDetails,
+        mealsRemaining: person.mealsRemaining,
+        mealDetails: person.mealDetails,
       };
     }
 
