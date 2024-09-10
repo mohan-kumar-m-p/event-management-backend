@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiResponse } from 'src/shared/dto/api-response.dto';
 import { EventService } from './event.service';
@@ -29,9 +29,32 @@ export class EventController {
     return ApiResponse.success('Group events retrieved successfully', events);
   }
 
+  @Get('past-events')
+  async findAllPastEvents(): Promise<ApiResponse<any>> {
+    const events = await this.eventService.findAllPastEvents();
+    return ApiResponse.success('Past events retrieved successfully', events);
+  }
+
+  @Get('upcoming-events')
+  async findAllUpcomingEvents(): Promise<ApiResponse<any>> {
+    const events = await this.eventService.findAllUpcomingEvents();
+    return ApiResponse.success(
+      'Upcoming events retrieved successfully',
+      events,
+    );
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string): Promise<ApiResponse<any>> {
     const event = await this.eventService.findOne(id);
     return ApiResponse.success('Event retrieved successfully', event);
+  }
+
+  @Post('complete-event/:id')
+  async markEventAsComplete(
+    @Param('id') id: string,
+  ): Promise<ApiResponse<any>> {
+    const event = await this.eventService.markEventAsComplete(id);
+    return ApiResponse.success(`Event with ID ${id} marked as complete`, event);
   }
 }

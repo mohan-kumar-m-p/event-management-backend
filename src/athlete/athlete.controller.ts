@@ -137,6 +137,24 @@ export class AthleteController {
     return ApiResponse.success('Athlete events updated successfully', athlete);
   }
 
+  @Get(':id/past-events')
+  async findPastEvents(@Param('id') id: string): Promise<ApiResponse<any>> {
+    const events = await this.athleteService.findPastEvents(id);
+    return ApiResponse.success(
+      `Past events for athlete with ID ${id} retrieved successfully`,
+      events,
+    );
+  }
+
+  @Get(':id/upcoming-events')
+  async findUpcomingEvents(@Param('id') id: string): Promise<ApiResponse<any>> {
+    const events = await this.athleteService.findUpcomingEvents(id);
+    return ApiResponse.success(
+      `Upcoming events for athlete with ID ${id} retrieved successfully`,
+      events,
+    );
+  }
+
   // TODO (DONE) Create an new endpoint for get all coaches for this athlete by using the school affiliation number from JWT.Response should be array of objects
   // TODO (DONE) Create an new endpoint for get all managers for this athlete by using the school affiliation number from JWT. Response should be array of objects
   // TODO Create a new endpoint for get all events for an athlete that are in past and in future. Response should should be an object of 2 objects, past and future

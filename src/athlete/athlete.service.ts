@@ -884,6 +884,70 @@ export class AthleteService {
     }
   }
 
+  async findPastEvents(id: string): Promise<any> {
+    const athlete = await this.athleteRepository.findOne({
+      where: { registrationId: id },
+      relations: ['events'],
+    });
+
+    if (!athlete) {
+      throw new NotFoundException(`Athlete with ID ${id} not found`);
+    }
+
+    const pastEvents = athlete.events.filter((event) => event.completed);
+    if (!pastEvents || pastEvents.length === 0) {
+      throw new NotFoundException(
+        `No past events found for athlete with ID ${id}`,
+      );
+    }
+    // Grouping events by type
+    const groupedEvents = pastEvents.reduce(
+      (acc, event) => {
+        const type = event.type.toLowerCase();
+        if (!acc[type]) {
+          acc[type] = [];
+        }
+        acc[type].push(event);
+        return acc;
+      },
+      {} as { [key: string]: Event[] },
+    );
+
+    return groupedEvents;
+  }
+
+  async findUpcomingEvents(id: string): Promise<any> {
+    const athlete = await this.athleteRepository.findOne({
+      where: { registrationId: id },
+      relations: ['events'],
+    });
+
+    if (!athlete) {
+      throw new NotFoundException(`Athlete with ID ${id} not found`);
+    }
+
+    const upcomingEvents = athlete.events.filter((event) => !event.completed);
+    if (!upcomingEvents || upcomingEvents.length === 0) {
+      throw new NotFoundException(
+        `No upcoming events found for athlete with ID ${id}`,
+      );
+    }
+    // Grouping events by type
+    const groupedEvents = upcomingEvents.reduce(
+      (acc, event) => {
+        const type = event.type.toLowerCase();
+        if (!acc[type]) {
+          acc[type] = [];
+        }
+        acc[type].push(event);
+        return acc;
+      },
+      {} as { [key: string]: Event[] },
+    );
+
+    return groupedEvents;
+  }
+
   private async checkUniqueConstraints(
     emailId: string,
     aadhaarNumber?: string,

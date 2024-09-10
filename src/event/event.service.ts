@@ -84,4 +84,65 @@ export class EventService {
 
     return groupedEvents;
   }
+
+  async findAllPastEvents(): Promise<any> {
+    const pastEvents = await this.eventRepository.find({
+      where: { completed: true },
+    });
+    if (!pastEvents || pastEvents.length === 0) {
+      throw new NotFoundException(`No past events found`);
+    }
+    // Grouping events by type
+    const groupedEvents = pastEvents.reduce(
+      (acc, event) => {
+        const type = event.type.toLowerCase();
+        if (!acc[type]) {
+          acc[type] = [];
+        }
+        acc[type].push(event);
+        return acc;
+      },
+      {} as { [key: string]: Event[] },
+    );
+
+    return groupedEvents;
+  }
+
+  async findAllUpcomingEvents(): Promise<any> {
+    const upcomingEvents = await this.eventRepository.find({
+      where: { completed: false },
+    });
+    if (!upcomingEvents || upcomingEvents.length === 0) {
+      throw new NotFoundException(`No upcoming events found`);
+    }
+
+    // Grouping events by type
+    const groupedEvents = upcomingEvents.reduce(
+      (acc, event) => {
+        const type = event.type.toLowerCase();
+        if (!acc[type]) {
+          acc[type] = [];
+        }
+        acc[type].push(event);
+        return acc;
+      },
+      {} as { [key: string]: Event[] },
+    );
+
+    return groupedEvents;
+  }
+
+  async markEventAsComplete(id: string): Promise<Event> {
+    const event = await this.eventRepository.findOne({
+      where: { eventId: id },
+    });
+
+    if (!event) {
+      throw new NotFoundException(`No event with ${id} found`);
+    }
+
+    event.completed = true;
+    await this.eventRepository.save(event);
+    return event;
+  }
 }
