@@ -30,7 +30,7 @@ export class MealController {
       await this.mealService.checkIfEligibleForMeal(affiliationNumber);
 
     if (!isEligible) {
-      throw new BadRequestException('Not eligible for meal');
+      throw new BadRequestException('Not eligible for meal since affiliated school has not made a payment');
     }
 
     let athleteId;
@@ -70,7 +70,7 @@ export class MealController {
   }
 
   // to be used by athlete/manager/coach to get their meal details or by manager/coach to get the meal details of the athlete they are managing
-  @Get('get-meal-details')
+  @Post('get-meal-details')
   async getMealDetails(
     @Request() req,
     @Body() body,
@@ -80,7 +80,7 @@ export class MealController {
       await this.mealService.checkIfEligibleForMeal(affiliationNumber);
 
     if (!isEligible) {
-      throw new BadRequestException('Not eligible for meal');
+      throw new BadRequestException('Not eligible for meal since affiliated school has not made a payment');
     }
 
     let athleteId;
