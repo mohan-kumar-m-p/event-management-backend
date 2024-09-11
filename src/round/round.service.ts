@@ -1,15 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Round } from './round.entity';
 import { Athlete } from '../athlete/athlete.entity';
+import { Round } from './round.entity';
 
 @Injectable()
 export class RoundService {
   constructor(
     @InjectRepository(Round)
     private readonly roundRepository: Repository<Round>,
-    @InjectRepository(Round)
+    @InjectRepository(Athlete)
     private readonly athleteRepository: Repository<Athlete>,
   ) {}
 
@@ -20,6 +20,7 @@ export class RoundService {
     });
     const athletes = await this.athleteRepository.find({
       where: { events: { eventId: round.event.eventId } },
+      relations: ['events'],
     });
     return athletes;
   }

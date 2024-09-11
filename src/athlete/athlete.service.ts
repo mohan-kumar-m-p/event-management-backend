@@ -781,7 +781,8 @@ export class AthleteService {
     }
 
     if (!eventIds || eventIds.length === 0) {
-      throw new BadRequestException('No events provided');
+      athlete.events = [];
+      return await this.athleteRepository.save(athlete);
     }
 
     const events = await this.eventRepository.findBy({

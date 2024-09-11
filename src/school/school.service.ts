@@ -46,7 +46,9 @@ export class SchoolService {
         });
 
         return {
-          ...school,
+          affiliationNumber: school.affiliationNumber,
+          name: school.name,
+          emailId: school.emailId,
           athleteCount,
           managerCount,
           coachCount,
