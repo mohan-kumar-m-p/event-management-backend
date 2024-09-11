@@ -20,6 +20,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   private static extractJWTFromCookieOrHeader(req: any): string | null {
+// testing logs. TODO delete
+    console.log('cookies', req?.cookies.access_token)
+    console.log('reqHeadeers', req?.headers?.authorization)
+    console.log('BearerToken', req?.headers?.authorization?.split(' ')[1])
     if (
       req.cookies &&
       'access_token' in req.cookies &&
