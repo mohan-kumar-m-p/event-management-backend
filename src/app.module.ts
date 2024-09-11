@@ -23,6 +23,7 @@ import { AthleteHeatModule } from './athlete-heat/athlete-heat.module';
 import { CulturalProgramModule } from './cultural-program/cultural-program.module';
 import { ExperienceZoneModule } from './experience-zone/experience-zone.module';
 import { DiscoverySessionModule } from './discovery-session/discovery-session.module';
+import { FieldEventsModule } from './field-events/field-events.module';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { DiscoverySessionModule } from './discovery-session/discovery-session.mo
     CulturalProgramModule,
     ExperienceZoneModule,
     DiscoverySessionModule,
+    FieldEventsModule,
   ],
   controllers: [WildcardController],
 })
