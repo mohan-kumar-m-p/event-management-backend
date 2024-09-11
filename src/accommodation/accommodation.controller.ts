@@ -13,8 +13,7 @@ import { ApiResponse } from '../shared/dto/api-response.dto';
 import { OrganizerRole } from '../shared/roles';
 import { AccommodationService } from './accommodation.service';
 
-@UseGuards(AuthGuard('jwt'))
-@UseGuards(RolesGuard([OrganizerRole.Warden]))
+@UseGuards(AuthGuard('jwt'), RolesGuard([OrganizerRole.Warden]))
 @Controller('accommodation')
 export class AccommodationController {
   constructor(private readonly accommodationService: AccommodationService) {}

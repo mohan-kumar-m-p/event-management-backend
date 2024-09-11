@@ -6,8 +6,7 @@ import { OrganizerRole } from '../shared/roles';
 import { AthleteHeat } from './athlete-heat.entity';
 import { AthleteHeatService } from './athlete-heat.service';
 
-@UseGuards(AuthGuard('jwt'))
-@UseGuards(RolesGuard([OrganizerRole.MeetManager]))
+@UseGuards(AuthGuard('jwt'), RolesGuard([OrganizerRole.MeetManager]))
 @Controller('athlete-heat')
 export class AthleteHeatController {
   constructor(private readonly athleteHeatService: AthleteHeatService) {}

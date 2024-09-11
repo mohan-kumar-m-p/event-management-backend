@@ -1,12 +1,11 @@
 import { Controller, Param, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiResponse } from 'src/shared/dto/api-response.dto';
+import { RolesGuard } from '../guards/role.guard';
+import { ApiResponse } from '../shared/dto/api-response.dto';
+import { OrganizerRole } from '../shared/roles';
 import { HeatService } from './heat.service';
-import { RolesGuard } from 'src/guards/role.guard';
-import { OrganizerRole } from 'src/shared/roles';
 
-@UseGuards(AuthGuard('jwt'))
-@UseGuards(RolesGuard([OrganizerRole.MeetManager]))
+@UseGuards(AuthGuard('jwt'), RolesGuard([OrganizerRole.MeetManager]))
 @Controller('heat')
 export class HeatController {
   constructor(private readonly heatService: HeatService) {}
