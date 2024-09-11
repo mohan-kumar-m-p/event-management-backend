@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,6 +15,7 @@ import { PaymentStatus } from './enum/payment-status.enum';
 
 @Injectable()
 export class PaymentService {
+  private readonly logger = new Logger(PaymentService.name);
   constructor(
     @InjectRepository(Athlete)
     private readonly athleteRepository: Repository<Athlete>,
@@ -59,7 +61,7 @@ export class PaymentService {
       if (!affiliationNumber) {
         throw new BadRequestException('Affiliation number must be provided');
       }
-  
+
       const school = await this.schoolRepository.findOne({
         where: { affiliationNumber },
       });
@@ -109,6 +111,30 @@ export class PaymentService {
       await this.schoolRepository.save(school);
     } catch (error) {
       throw new InternalServerErrorException('Failed to update payment status');
+    }
+  }
+
+  async getPaymentDetails() {
+    try {
+      const schools = await this.schoolRepository.find({
+        select: ['affiliationNumber', 'name', 'emailId', 'paymentStatus'],
+      });
+      const groupedSchools = {
+        [PaymentStatus.NotPaid]: [],
+        [PaymentStatus.ApprovalPending]: [],
+        [PaymentStatus.Paid]: [],
+      };
+      schools.forEach((school) => {
+        groupedSchools[school.paymentStatus].push({
+          affiliationNumber: school.affiliationNumber,
+          name: school.name,
+          emailId: school.emailId,
+        });
+      });
+      return groupedSchools;
+    } catch (error) {
+      this.logger.error(`Failed to get payment details: ${error.message}`);
+      throw new InternalServerErrorException('Failed to get payment details');
     }
   }
 }
