@@ -64,6 +64,8 @@ export class AthleteService {
     // Generate unique chest number
     const chestNumber = await this.generateUniqueChestNumber();
 
+    const phone = `+91${athleteDto.phone}`;
+
     let s3Data = null;
     if (photo) {
       s3Data = await this.s3Service.uploadFile(photo, 'athlete');
@@ -72,6 +74,7 @@ export class AthleteService {
     // Create the athlete entity
     const athlete = this.athleteRepository.create({
       ...athleteDto,
+      phone,
       chestNumber,
       mealsRemaining: 5,
       school: school,

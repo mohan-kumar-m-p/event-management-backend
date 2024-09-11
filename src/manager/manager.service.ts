@@ -51,6 +51,8 @@ export class ManagerService {
       throw new NotFoundException('School not found');
     }
 
+    const phone = `+91${managerDto.phone}`;
+
     let s3Data = null;
     if (photo) {
       s3Data = await this.s3Service.uploadFile(photo, 'manager');
@@ -58,6 +60,7 @@ export class ManagerService {
     // Prepare the manager entity
     const manager = this.managerRepository.create({
       ...managerDto,
+      phone,
       mealsRemaining: 5,
       school: school,
       photoUrl: s3Data?.fileKey || null,

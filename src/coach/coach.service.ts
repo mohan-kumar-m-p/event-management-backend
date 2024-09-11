@@ -46,6 +46,8 @@ export class CoachService {
       throw new NotFoundException('School not found');
     }
 
+    const phone = `+91${coachDto.phone}`;
+
     let s3Data = null;
     if (photo) {
       s3Data = await this.s3Service.uploadFile(photo, 'coach');
@@ -54,6 +56,7 @@ export class CoachService {
     // Prepare the coach entity
     const coach = this.coachRepository.create({
       ...coachDto,
+      phone,
       mealsRemaining: 5,
       school: school,
       photoUrl: s3Data?.fileKey || null,
