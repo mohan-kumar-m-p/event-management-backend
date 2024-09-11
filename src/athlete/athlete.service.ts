@@ -110,7 +110,7 @@ export class AthleteService {
           schoolName: athlete.school.name,
           accommodationId: athlete.accommodation?.accommodationId || null,
           accommodationName: athlete.accommodation?.name || null,
-          blockName: athlete.accommodation?.block.name || null,
+          blockName: athlete.accommodation?.block?.name || null,
         };
 
         if (athlete.photoUrl) {
@@ -158,7 +158,7 @@ export class AthleteService {
           schoolName: athlete.school.name,
           accommodationId: athlete.accommodation?.accommodationId || null,
           accommodationName: athlete.accommodation?.name || null,
-          blockName: athlete.accommodation?.block.name || null,
+          blockName: athlete.accommodation?.block?.name || null,
         };
 
         if (athlete.photoUrl) {
@@ -204,7 +204,7 @@ export class AthleteService {
       schoolName: athlete.school.name,
       accommodationId: athlete.accommodation?.accommodationId || null,
       accommodationName: athlete.accommodation?.name || null,
-      blockName: athlete.accommodation?.block.name || null,
+      blockName: athlete.accommodation?.block?.name || null,
     };
 
     if (athlete.photoUrl) {
@@ -673,7 +673,6 @@ export class AthleteService {
     }
   }
 
-  // TODO (DONE) Add cultural events to this too
   async findAssignedEvents(id: string): Promise<any> {
     const athlete = await this.athleteRepository.findOne({
       where: { registrationId: id },

@@ -10,7 +10,7 @@ import { Round } from '../round/round.entity';
 import { BaseEntity } from '../shared/base.entity';
 @Entity()
 export class Heat extends BaseEntity {
-  @PrimaryGeneratedColumn('increment')
+  @PrimaryGeneratedColumn('uuid')
   heatId: string;
 
   @Column()

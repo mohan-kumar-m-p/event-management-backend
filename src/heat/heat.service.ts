@@ -21,7 +21,7 @@ export class HeatService {
     private readonly roundRepository: Repository<Round>,
   ) {}
 
-  async generateQualifierHeats(id: string): Promise<Heat[]> {
+  async generateQualifierHeats(id: string): Promise<any> {
     const round = await this.roundRepository.findOne({
       where: { roundId: id },
       relations: ['event'],
@@ -64,6 +64,7 @@ export class HeatService {
     }
 
     // Assign athletes to heats
+    const athleteHeats = [];
     let athleteIndex = 0;
     for (let i = 0; i < numberOfHeats; i++) {
       const heat = heats[i];
@@ -77,15 +78,17 @@ export class HeatService {
           heat,
           lane: j + 1,
         });
-        try {
-          await this.athleteHeatRepository.save(athleteHeat);
-        } catch (error) {
+        if (athleteHeat) {
+          athleteHeats.push(athleteHeat);
+        } else {
           console.error(
             `Error assigning athlete ${athlete.name} to heat ${heat.heatName}, lane ${j + 1}`,
           );
         }
       }
     }
+
+    await this.athleteHeatRepository.save(athleteHeats);
 
     // Balance the last two heats if necessary
     if (remainingAthletes > 0 && remainingAthletes < minAthletesPerHeat) {
@@ -127,7 +130,15 @@ export class HeatService {
     // Save updated heats
     await Promise.all(heats.map((heat) => this.heatRepository.save(heat)));
 
-    return heats;
+    return heats.map((heat) => ({
+      heatName: heat.heatName,
+      athletePlacements: heat.athletePlacements,
+      heatId: heat.heatId,
+      roundId: heat.round.roundId,
+      eventId: heat.round.event.eventId,
+      round: heat.round.round,
+      event: `${heat.round.event.name} ${heat.round.event.category} ${heat.round.event.gender == 'M' ? 'Boys' : 'Girls'}`,
+    }));
   }
 
   async generateSemifinalHeats(id: string): Promise<Heat[]> {

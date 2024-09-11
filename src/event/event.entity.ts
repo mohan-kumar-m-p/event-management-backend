@@ -44,7 +44,7 @@ export class Event extends BaseEntity {
   @Column({ nullable: true })
   order: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: 'date' })
   date: Date;
 
   @Column({ default: false })

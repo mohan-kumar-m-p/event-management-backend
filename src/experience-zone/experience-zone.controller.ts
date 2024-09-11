@@ -12,7 +12,7 @@ export class ExperienceZoneController {
   async findAll(): Promise<ApiResponse<any>> {
     const experienceZones = await this.experienceZoneService.findAll();
     return ApiResponse.success(
-      'Discovery sessions fetched successfully',
+      'Experience zone fetched successfully',
       experienceZones,
     );
   }
