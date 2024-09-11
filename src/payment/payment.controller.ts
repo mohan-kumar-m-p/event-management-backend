@@ -42,4 +42,14 @@ export class PaymentController {
     );
     return ApiResponse.success('Payment status updated successfully');
   }
+
+  @Get('payment-details')
+  @UseGuards(RolesGuard([OrganizerRole.AccountsManager]))
+  async getPaymentDetails(): Promise<ApiResponse<any>> {
+    const paymentDetails = await this.paymentService.getPaymentDetails();
+    return ApiResponse.success(
+      'Payment details fetched successfully',
+      paymentDetails,
+    );
+  }
 }
