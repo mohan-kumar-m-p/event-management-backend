@@ -16,8 +16,8 @@ export class Heat extends BaseEntity {
   @Column()
   heatName: string;
 
-  @Column('simple-array')
-  athletePlacements: string[];
+  @Column({ type: 'json' })
+  athletePlacements: Record<string, any>;
 
   @ManyToOne(() => Round, (round) => round.heats)
   round: Round;
