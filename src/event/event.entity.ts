@@ -6,11 +6,11 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Athlete } from '../athlete/athlete.entity';
+import { Round } from '../round/round.entity';
 import { BaseEntity } from '../shared/base.entity';
 import { EventCategory } from './enums/event-category.enum';
 import { EventSportGroup } from './enums/event-sport-group.enum';
 import { EventType } from './enums/event-type.enum';
-import { Round } from '../round/round.entity';
 
 @Entity()
 export class Event extends BaseEntity {

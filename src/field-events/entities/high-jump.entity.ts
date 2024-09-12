@@ -7,10 +7,10 @@ export class HighJump extends BaseEntity {
   eventId: string;
 
   @Column('uuid')
-  athleteRegistrationId: string;
+  registrationId: string;
 
-  @Column({ nullable: true })
-  bestScore: string;
+  @Column({ type: 'json', nullable: true })
+  score: Record<string, any>;
 
   @Column({ nullable: true })
   position: string;

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -127,8 +128,9 @@ export class MealService {
     const affiliationNumber = person.school.affiliationNumber;
     const isEligible = await this.checkIfEligibleForMeal(affiliationNumber);
     if (!isEligible) {
-      throw new BadRequestException(
-        `Not eligible for meal since school with affiliation number ${affiliationNumber} has not paid`,
+      throw new HttpException(
+        `Payment required for school with affiliation number ${affiliationNumber} `,
+        402,
       );
     }
 
@@ -218,8 +220,9 @@ export class MealService {
       const affiliationNumber = person.school.affiliationNumber;
       const isEligible = await this.checkIfEligibleForMeal(affiliationNumber);
       if (!isEligible) {
-        throw new BadRequestException(
-          `Not eligible for meal since school with affiliation number ${affiliationNumber} has not paid`,
+        throw new HttpException(
+          `Payment required for school with affiliation number ${affiliationNumber} `,
+          402,
         );
       }
       return {
@@ -264,8 +267,9 @@ export class MealService {
     const affiliationNumber = person.school.affiliationNumber;
     const isEligible = await this.checkIfEligibleForMeal(affiliationNumber);
     if (!isEligible) {
-      throw new BadRequestException(
-        `Not eligible for meal since school with affiliation number ${affiliationNumber} has not paid`,
+      throw new HttpException(
+        `Payment required for school with affiliation number ${affiliationNumber} `,
+        402,
       );
     }
 
