@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { ApiResponse } from 'src/shared/dto/api-response.dto';
 import { HighJumpDto } from './dtos/highJump.dto';
 import { FieldEventsService } from './field-events.service';
-import { ApiResponse } from 'src/shared/dto/api-response.dto';
 
 @Controller('field-events')
 export class FieldEventsController {
@@ -22,6 +22,13 @@ export class FieldEventsController {
   @Get('highjump-score')
   async getHighJumpsScore() {
     const highJumps = await this.fieldEventsService.getHighJumpScore();
+    return ApiResponse.success('High jumps retrieved successfully', highJumps);
+  }
+
+  @Get('highjump-score-by-event/:eventId')
+  async getHighJumpsByEvent(@Param('eventId') eventId: string) {
+    const highJumps =
+      await this.fieldEventsService.getHighJumpsByEvent(eventId);
     return ApiResponse.success('High jumps retrieved successfully', highJumps);
   }
 }

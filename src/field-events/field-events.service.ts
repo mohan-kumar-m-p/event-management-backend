@@ -134,5 +134,13 @@ export class FieldEventsService {
 
   async getHighJumpScore() {
     const highJumps = await this.highJumpRepository.find();
-    return highJumps;}
+    return highJumps;
+  }
+
+  async getHighJumpsByEvent(eventId: string) {
+    const highJumps = await this.highJumpRepository.find({
+      where: { eventId },
+    });
+    return highJumps;
+  }
 }
