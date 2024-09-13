@@ -1,4 +1,3 @@
-import { Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
@@ -8,15 +7,21 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
-class RoundDTO {
+// DTO for athlete details
+class AthleteDetailsDto {
+  @IsString()
+  @IsNotEmpty()
+  registrationId: string;
+
   @IsArray()
   @IsNumber({}, { each: true })
-  @IsOptional()
+  @IsNotEmpty()
   scores: number[];
 
   @IsBoolean()
-  @IsOptional()
+  @IsNotEmpty()
   qualified: boolean;
 
   @IsBoolean()
@@ -24,20 +29,10 @@ class RoundDTO {
   submitted: boolean;
 }
 
-export class HighJumpDto {
-  @IsString()
-  @IsNotEmpty()
-  eventId: string;
-
-  @IsString()
-  @IsNotEmpty()
-  registrationId: string;
-
+// DTO for the entire request body
+export class CreateHighJumpRoundDto {
+  @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => RoundDTO)
-  score: { [key: string]: RoundDTO };
-
-  @IsString()
-  @IsOptional()
-  position?: string;
+  @Type(() => AthleteDetailsDto)
+  athleteDetails: AthleteDetailsDto[];
 }

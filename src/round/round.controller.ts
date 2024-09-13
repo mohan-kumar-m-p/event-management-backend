@@ -1,7 +1,7 @@
-import { Controller, Get, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { RoundService } from './round.service';
 import { ApiResponse } from '../shared/dto/api-response.dto';
+import { RoundService } from './round.service';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('round')
@@ -18,5 +18,13 @@ export class RoundController {
       `All athletes that are qualified for round with ID ${roundId} fetched successfully`,
       athletes,
     );
+  }
+
+  @Post('complete-event/:id')
+  async markRoundAsComplete(
+    @Param('id') id: string,
+  ): Promise<ApiResponse<any>> {
+    const event = await this.roundService.markRoundAsComplete(id);
+    return ApiResponse.success(`Event with ID ${id} marked as complete`, event);
   }
 }

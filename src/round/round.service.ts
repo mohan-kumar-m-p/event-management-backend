@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Athlete } from '../athlete/athlete.entity';
@@ -23,5 +23,19 @@ export class RoundService {
       relations: ['events'],
     });
     return athletes;
+  }
+
+  async markRoundAsComplete(id: string): Promise<Round> {
+    const round = await this.roundRepository.findOne({
+      where: { roundId: id },
+    });
+
+    if (!round) {
+      throw new NotFoundException(`No event with ${id} found`);
+    }
+
+    round.completed = true;
+    await this.roundRepository.save(round);
+    return round;
   }
 }

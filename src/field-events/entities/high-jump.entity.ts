@@ -1,9 +1,12 @@
 import { BaseEntity } from 'src/shared/base.entity';
-import { Column, Entity, PrimaryColumn } from 'typeorm';
+import { Column, Entity, PrimaryColumn, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class HighJump extends BaseEntity {
-  @PrimaryColumn('uuid')
+@PrimaryGeneratedColumn()
+  id: string;
+
+  @Column('uuid')
   eventId: string;
 
   @Column('uuid')
