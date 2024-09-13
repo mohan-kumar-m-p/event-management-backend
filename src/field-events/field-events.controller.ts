@@ -11,14 +11,27 @@ export class FieldEventsController {
   async saveHighJumpScore(
     @Param('eventId') eventId: string,
     @Param('roundNumber') roundNumber: string,
-    @Body() createHighJumpRoundDto: CreateHighJumpRoundDto) {
-    await this.fieldEventsService.saveHighJumpScore(createHighJumpRoundDto, eventId, roundNumber);
+    @Body() createHighJumpRoundDto: CreateHighJumpRoundDto,
+  ) {
+    await this.fieldEventsService.saveHighJumpScore(
+      createHighJumpRoundDto,
+      eventId,
+      roundNumber,
+    );
     return ApiResponse.success('High jump score created successfully');
   }
 
-  @Post('submit-highjump-score')
-  async submitHighJumpScore(@Body() createHighJumpRoundDto: CreateHighJumpRoundDto) {
-    await this.fieldEventsService.submitHighJumpScore(createHighJumpRoundDto);
+  @Post('submit-highjump-score/event/:eventId/round/:roundNumber')
+  async submitHighJumpScore(
+    @Param('eventId') eventId: string,
+    @Param('roundNumber') roundNumber: string,
+    @Body() createHighJumpRoundDto: CreateHighJumpRoundDto,
+  ) {
+    await this.fieldEventsService.submitHighJumpScore(
+      createHighJumpRoundDto,
+      eventId,
+      roundNumber,
+    );
     return ApiResponse.success('High jump score created successfully');
   }
 

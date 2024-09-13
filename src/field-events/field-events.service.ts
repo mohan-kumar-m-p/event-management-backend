@@ -11,7 +11,6 @@ import { Event } from '../event/event.entity';
 import { CreateHighJumpRoundDto } from './dtos/highJump.dto';
 import { FieldEvents } from './entities/field-events.entity';
 import { HighJump } from './entities/high-jump.entity';
-import { filter } from 'rxjs';
 
 @Injectable()
 export class FieldEventsService {
@@ -35,7 +34,7 @@ export class FieldEventsService {
     roundNumber: string,
   ) {
     try {
-      const result = []
+      const result = [];
       for (const entry of createHighJumpDto.athleteDetails) {
         const { registrationId, scores } = entry;
         const existingRecord = await this.highJumpRepository.findOne({
@@ -49,11 +48,11 @@ export class FieldEventsService {
             [`round${roundNumber}`]: {
               scores,
               qualified: entry.qualified,
-              submitted: entry.submitted || false,
+              submitted: entry.submitted ?? false,
               bestScore: Math.max(...scores),
             },
           };
-          result.push(highJump)
+          result.push(highJump);
         } else {
           if (
             existingRecord.score[`round${roundNumber}`].submitted &&
@@ -69,122 +68,72 @@ export class FieldEventsService {
           existingRecord.score[`round${roundNumber}`].qualified =
             entry.qualified;
           existingRecord.score[`round${roundNumber}`].submitted =
-            entry.submitted;
+            existingRecord.score[`round${roundNumber}`].submitted ?? false;
           existingRecord.score[`round${roundNumber}`].bestScore = Math.max(
             ...scores,
           );
-          result.push(existingRecord)
+          result.push(existingRecord);
         }
       }
       await this.highJumpRepository.save(result);
-
     } catch (error) {
-      this.logger.error(`Error saving high jump score: ${error}`);
+      this.logger.error(`Error while saving high jump score: ${error}`);
       throw error;
     }
-
-    // else {
-    //   await this.updateExistingRecord(existingRecord, score, false); // Don't change submitted, throw error if qualified changes
-    // }
-    //   }
-    // } catch (error) {
-    //   this.logger.error(`Error saving high jump score: ${error}`);
-    //   throw error;
-    // }
   }
 
   // Submit method (sets submitted to true but respects existing 'submitted' records)
-  async submitHighJumpScore(createHighJumpRoundDto: CreateHighJumpRoundDto) {
-    // try {
-    //   for (const entry of createHighJumpRoundDto) {
-    //     const { registrationId, eventId, score } = entry;
-    //     const existingRecord = await this.highJumpRepository.findOne({
-    //       where: { registrationId, eventId },
-    //     });
-    //     if (!existingRecord) {
-    //       await this.saveNewRecord(entry, true); // Set submitted to true
-    //     } else {
-    //       await this.updateExistingRecord(existingRecord, score, true); // Check qualified, set submitted to true
-    //     }
-    //   }
-    // } catch (error) {
-    //   this.logger.error(`Error submitting high jump score: ${error}`);
-    //   throw error;
-    // }
-  }
-
-  // Helper function to save new record
-  private async saveNewRecord(entry: any, isSubmitted: boolean): Promise<void> {
-    const { registrationId, eventId, score } = entry;
-
-    // Iterate over rounds and add the bestScore and submitted fields
-    for (const roundKey in score) {
-      if (score[roundKey].scores.length > 0) {
-        score[roundKey].bestScore = Math.max(...score[roundKey].scores);
-      } else {
-        score[roundKey].bestScore = null; // Handle empty scores
-      }
-      // Set the submitted field based on the method called
-      score[roundKey].submitted = isSubmitted;
-    }
-
-    const newRecord = this.highJumpRepository.create({
-      registrationId,
-      eventId,
-      score,
-    });
-
-    await this.highJumpRepository.save(newRecord);
-  }
-
-  // Helper function to update an existing record
-  private async updateExistingRecord(
-    existingRecord: any,
-    incomingScore: any,
-    isSubmitted: boolean,
-  ): Promise<void> {
-    const dbScore = existingRecord.score;
-
-    for (const roundKey in incomingScore) {
-      const incomingRound = incomingScore[roundKey];
-
-      if (!dbScore[roundKey]) {
-        // If new round, add it
-        dbScore[roundKey] = incomingRound;
-        dbScore[roundKey].submitted = isSubmitted; // Set submitted field
-      } else {
-        // Round already exists in DB
-        const dbRound = dbScore[roundKey];
-
-        if (
-          dbRound.submitted &&
-          incomingRound.qualified !== dbRound.qualified
-        ) {
-          // Error if trying to change qualified when submitted is true
-          throw new BadRequestException(
-            `Cannot change qualified status for ${roundKey} for registrationId ${existingRecord.registrationId}`,
-          );
-        }
-
-        // If submitted is false, replace all data
-        if (!dbRound.submitted) {
-          dbScore[roundKey] = incomingRound;
-          dbScore[roundKey].submitted = isSubmitted;
+  async submitHighJumpScore(
+    createHighJumpDto: CreateHighJumpRoundDto,
+    eventId: string,
+    roundNumber: string,
+  ) {
+    try {
+      const result = [];
+      for (const entry of createHighJumpDto.athleteDetails) {
+        const { registrationId, scores } = entry;
+        const existingRecord = await this.highJumpRepository.findOne({
+          where: { registrationId, eventId },
+        });
+        if (!existingRecord) {
+          const highJump = new HighJump();
+          highJump.registrationId = registrationId;
+          highJump.eventId = eventId;
+          highJump.score = {
+            [`round${roundNumber}`]: {
+              scores,
+              qualified: entry.qualified,
+              submitted: true,
+              bestScore: Math.max(...scores),
+            },
+          };
+          result.push(highJump);
         } else {
-          // If submitted is true, only update scores
-          dbScore[roundKey].scores = incomingRound.scores;
-          dbScore[roundKey].bestScore = Math.max(...incomingRound.scores);
-
-          // If this is the submit call, mark it as submitted
-          if (isSubmitted) {
-            dbScore[roundKey].submitted = true;
+          if (
+            existingRecord.score[`round${roundNumber}`].submitted &&
+            existingRecord.score[`round${roundNumber}`].qualified !==
+              entry.qualified
+          ) {
+            throw new BadRequestException(
+              `Cannot change qualified status for ${`round${roundNumber}`} for registrationId ${existingRecord.registrationId}`,
+            );
           }
+
+          existingRecord.score[`round${roundNumber}`].scores = scores;
+          existingRecord.score[`round${roundNumber}`].qualified =
+            entry.qualified;
+          existingRecord.score[`round${roundNumber}`].submitted = true;
+          existingRecord.score[`round${roundNumber}`].bestScore = Math.max(
+            ...scores,
+          );
+          result.push(existingRecord);
         }
       }
+      await this.highJumpRepository.save(result);
+    } catch (error) {
+      this.logger.error(`Error while submitting high jump score: ${error}`);
+      throw error;
     }
-
-    // Save the updated record
-    await this.highJumpRepository.save(existingRecord);
   }
 
   async createHighJumpRound(eventId, round) {
