@@ -853,27 +853,27 @@ export class AthleteService {
       (event) => event.type === EventType.Individual,
     );
     // Check swimming events
-    let maxIndividualEvents = 0;
-    const eventCategory = events[0].category; // All events have the same category as checked earlier
+    const maxIndividualEvents = 2;
+    // const eventCategory = events[0].category; // All events have the same category as checked earlier
 
-    switch (eventCategory) {
-      case EventCategory.Under11:
-        maxIndividualEvents = 3;
-        break;
-      case EventCategory.Under14:
-        maxIndividualEvents = 4;
-        break;
-      case EventCategory.Under17:
-      case EventCategory.Under19:
-        maxIndividualEvents = 5;
-        break;
-      default:
-        throw new BadRequestException('Invalid event category');
-    }
+    // switch (eventCategory) {
+    //   case EventCategory.Under11:
+    //     maxIndividualEvents = 3;
+    //     break;
+    //   case EventCategory.Under14:
+    //     maxIndividualEvents = 4;
+    //     break;
+    //   case EventCategory.Under17:
+    //   case EventCategory.Under19:
+    //     maxIndividualEvents = 5;
+    //     break;
+    //   default:
+    //     throw new BadRequestException('Invalid event category');
+    // }
 
     if (individualEvents.length > maxIndividualEvents) {
       throw new BadRequestException(
-        `Athletes in this age group can only participate in up to ${maxIndividualEvents} individual events`,
+        `Athletes can only participate in up to ${maxIndividualEvents} individual events`,
       );
     }
 

@@ -20,11 +20,20 @@ export class RoundController {
     );
   }
 
-  @Post('complete-event/:id')
+  @Post('complete-round/:id')
   async markRoundAsComplete(
     @Param('id') id: string,
   ): Promise<ApiResponse<any>> {
-    const event = await this.roundService.markRoundAsComplete(id);
-    return ApiResponse.success(`Event with ID ${id} marked as complete`, event);
+    const round = await this.roundService.markRoundAsComplete(id);
+    return ApiResponse.success(`Event with ID ${id} marked as complete`, round);
+  }
+
+  @Get(':id')
+  async getRoundById(@Param('id') id: string): Promise<ApiResponse<any>> {
+    const round = await this.roundService.getRoundById(id);
+    return ApiResponse.success(
+      `Round with ID ${id} retrieved successfully`,
+      round,
+    );
   }
 }

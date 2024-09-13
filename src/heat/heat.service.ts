@@ -1,7 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EventSportGroup } from 'src/event/enums/event-sport-group.enum';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { AthleteHeat } from '../athlete-heat/athlete-heat.entity';
 import { Athlete } from '../athlete/athlete.entity';
 import { Round as RoundEnum } from '../round/enums/round.enum';
@@ -31,6 +35,12 @@ export class HeatService {
       throw new NotFoundException(`Round with ID ${id} not found`);
     }
 
+    if (round.round != RoundEnum.Heats) {
+      throw new BadRequestException(
+        `Method requires a 'Heats' round, but round passed is '${round.round}'`,
+      );
+    }
+
     // Get athletes registered for the event
     const athletes = await this.athleteRepository.find({
       where: { events: { eventId: round.event.eventId } },
@@ -43,6 +53,23 @@ export class HeatService {
 
     if (athletes.length === 0) {
       throw new NotFoundException('No athletes registered for this event');
+    }
+
+    const existingHeats = await this.heatRepository.find({
+      where: { round: { roundId: id } },
+    });
+
+    if (existingHeats.length > 0) {
+      // Fetch athlete heats to remove
+      const athleteHeatsToRemove = await this.athleteHeatRepository.find({
+        where: {
+          heat: { heatId: In(existingHeats.map((heat) => heat.heatId)) },
+        },
+      });
+
+      await this.athleteHeatRepository.remove(athleteHeatsToRemove); // Delete athlete heats
+      // Check if there are existing heats
+      await this.heatRepository.remove(existingHeats); // Delete existing heats
     }
 
     // Number of lanes (assuming 8 lanes for athletics and 6 for swimming)
@@ -72,7 +99,6 @@ export class HeatService {
         i < fullHeats ? lanes : i === fullHeats ? remainingAthletes : 0;
       for (let j = 0; j < athletesInHeat; j++) {
         const athlete = athletes[athleteIndex++];
-        heat.athletePlacements[j] = athlete.chestNumber;
         const athleteHeat = await this.athleteHeatRepository.create({
           athlete,
           heat,
@@ -85,6 +111,13 @@ export class HeatService {
             `Error assigning athlete ${athlete.name} to heat ${heat.heatName}, lane ${j + 1}`,
           );
         }
+        heat.athletePlacements[j] = {
+          registrationId: athlete.registrationId,
+          name: athlete.name,
+          chestNumber: athlete.chestNumber,
+          position: athleteHeat.position || null,
+          time: athleteHeat.time || null,
+        };
       }
     }
 
@@ -98,15 +131,18 @@ export class HeatService {
 
       for (let i = 0; i < athletesToMove; i++) {
         const lastIndex = secondLastHeat.athletePlacements.length - (i + 1);
-        const lastChestNumber = secondLastHeat.athletePlacements[lastIndex];
+        // const lastChestNumber =
+        //   secondLastHeat.athletePlacements[lastIndex].chestNumber;
+        const lastAthlete = secondLastHeat.athletePlacements[lastIndex];
         const athleteToMove = await this.athleteRepository.findOne({
-          where: { chestNumber: lastChestNumber },
+          where: { chestNumber: lastAthlete.chestNumber },
         });
+        // secondLastHeat.athletePlacements[lastIndex].chestNumber = null;
         secondLastHeat.athletePlacements[lastIndex] = null;
         const emptyLane = lastHeat.athletePlacements.findIndex(
           (lane) => lane === null,
         );
-        lastHeat.athletePlacements[emptyLane] = athleteToMove.chestNumber;
+        lastHeat.athletePlacements[emptyLane] = lastAthlete;
 
         const athleteHeat = await this.athleteHeatRepository.findOne({
           where: {
@@ -141,7 +177,7 @@ export class HeatService {
     }));
   }
 
-  async generateSemifinalHeats(id: string): Promise<Heat[]> {
+  async generateSemifinalHeats(id: string): Promise<any> {
     const semifinalRound = await this.roundRepository.findOne({
       where: { roundId: id },
       relations: ['event'],
@@ -149,6 +185,12 @@ export class HeatService {
 
     if (!semifinalRound) {
       throw new NotFoundException(`Semifinal round with ID ${id} not found`);
+    }
+
+    if (semifinalRound.round != RoundEnum.Semifinals) {
+      throw new BadRequestException(
+        `Method requires a 'Semifinals' round, but round passed is '${semifinalRound.round}'`,
+      );
     }
 
     const qualifyingRound = await this.roundRepository.findOne({
@@ -162,6 +204,23 @@ export class HeatService {
       throw new NotFoundException(
         `Qualifying round not found for event ${semifinalRound.event.eventId}`,
       );
+    }
+
+    const existingHeats = await this.heatRepository.find({
+      where: { round: { roundId: id } },
+    });
+
+    if (existingHeats.length > 0) {
+      // Fetch athlete heats to remove
+      const athleteHeatsToRemove = await this.athleteHeatRepository.find({
+        where: {
+          heat: { heatId: In(existingHeats.map((heat) => heat.heatId)) },
+        },
+      });
+
+      await this.athleteHeatRepository.remove(athleteHeatsToRemove); // Delete athlete heats
+      // Check if there are existing heats
+      await this.heatRepository.remove(existingHeats); // Delete existing heats
     }
 
     const qualifiedAthletes = await this.athleteHeatRepository.find({
@@ -196,24 +255,37 @@ export class HeatService {
         const athleteHeat = qualifiedAthletes[athleteIndex];
         const athlete = athleteHeat.athlete;
 
-        heat.athletePlacements[j] = athlete.chestNumber;
-
         const newAthleteHeat = this.athleteHeatRepository.create({
           athlete,
           heat,
           lane: j + 1,
-          position: null, // Position will be determined after the semifinal race
         });
         await this.athleteHeatRepository.save(newAthleteHeat);
+        heat.athletePlacements[j] = {
+          registrationId: athlete.registrationId,
+          name: athlete.name,
+          chestNumber: athlete.chestNumber,
+          position: athleteHeat.position || null,
+          time: athleteHeat.time || null,
+        };
       }
       await this.heatRepository.save(heat);
       semiFinalHeats.push(heat);
     }
 
-    return semiFinalHeats;
+    // return semiFinalHeats;
+    return semiFinalHeats.map((heat) => ({
+      heatName: heat.heatName,
+      athletePlacements: heat.athletePlacements,
+      heatId: heat.heatId,
+      roundId: heat.round.roundId,
+      eventId: heat.round.event.eventId,
+      round: heat.round.round,
+      event: `${heat.round.event.name} ${heat.round.event.category} ${heat.round.event.gender == 'M' ? 'Boys' : 'Girls'}`,
+    }));
   }
 
-  async generateFinalHeat(id: string): Promise<Heat> {
+  async generateFinalHeat(id: string): Promise<any> {
     const finalRound = await this.roundRepository.findOne({
       where: { roundId: id },
       relations: ['event'],
@@ -221,6 +293,12 @@ export class HeatService {
 
     if (!finalRound) {
       throw new NotFoundException(`Final round with ID ${id} not found`);
+    }
+
+    if (finalRound.round != RoundEnum.Finals) {
+      throw new BadRequestException(
+        `Method requires a 'Final' round, but round passed is '${finalRound.round}'`,
+      );
     }
 
     const semifinalRound = await this.roundRepository.findOne({
@@ -254,7 +332,7 @@ export class HeatService {
 
     // Select top 3 from each heat, then 2nd place from each heat
     const qualifiedAthletes: AthleteHeat[] = [];
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 2; i++) {
       for (const heatId in athletesByHeat) {
         if (athletesByHeat[heatId][i]) {
           qualifiedAthletes.push(athletesByHeat[heatId][i]);
@@ -266,11 +344,11 @@ export class HeatService {
     const remainingAthletes = semifinalAthletes.filter(
       (athlete) => !qualifiedAthletes.includes(athlete),
     );
+
     const fastestRemaining = remainingAthletes
-      .sort((a, b) => {
-        if (!a.time || !b.time) return 0;
-        return this.parseTimeToMs(a.time) - this.parseTimeToMs(b.time);
-      })
+      .flat() // Flatten the array to ungroup by heatId
+      .filter((athlete) => athlete.time) // Ensure time is defined
+      .sort((a, b) => this.parseTimeToMs(a.time) - this.parseTimeToMs(b.time))
       .slice(0, 2);
 
     // Combine qualified athletes
@@ -287,18 +365,33 @@ export class HeatService {
     // Assign athletes to lanes
     for (let i = 0; i < finalAthletes.length; i++) {
       const athlete = finalAthletes[i].athlete;
-      finalHeat.athletePlacements[i] = athlete.chestNumber;
       const newAthleteHeat = this.athleteHeatRepository.create({
         athlete,
         heat: finalHeat,
         lane: i + 1,
       });
       await this.athleteHeatRepository.save(newAthleteHeat);
+      finalHeat.athletePlacements[i] = {
+        registrationId: athlete.registrationId,
+        name: athlete.name,
+        chestNumber: athlete.chestNumber,
+        position: newAthleteHeat.position || null,
+        time: newAthleteHeat.time || null,
+      };
     }
 
     await this.heatRepository.save(finalHeat);
 
-    return finalHeat;
+    // return finalHeat;
+    return {
+      heatName: finalHeat.heatName,
+      athletePlacements: finalHeat.athletePlacements,
+      heatId: finalHeat.heatId,
+      roundId: finalHeat.round.roundId,
+      eventId: finalHeat.round.event.eventId,
+      round: finalHeat.round.round,
+      event: `${finalHeat.round.event.name} ${finalHeat.round.event.category} ${finalHeat.round.event.gender == 'M' ? 'Boys' : 'Girls'}`,
+    };
   }
 
   private parseTimeToMs(timeString: string): number {

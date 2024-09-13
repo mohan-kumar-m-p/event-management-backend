@@ -31,11 +31,37 @@ export class RoundService {
     });
 
     if (!round) {
-      throw new NotFoundException(`No event with ${id} found`);
+      throw new NotFoundException(`No round with ${id} found`);
     }
 
     round.completed = true;
     await this.roundRepository.save(round);
     return round;
+  }
+
+  async getRoundById(id: string): Promise<any> {
+    const round = await this.roundRepository.findOne({
+      where: { roundId: id },
+      relations: ['heats', 'event'],
+    });
+    if (!round) {
+      throw new NotFoundException(`No round with ${id} found`);
+    }
+
+    const heats = round.heats.map((heat) => ({
+      heatName: heat.heatName,
+      heatId: heat.heatId,
+      athletePlacements: heat.athletePlacements,
+    }));
+
+    return {
+      event: `${round.event.name} ${round.event.category} ${round.event.gender == 'M' ? 'Boys' : 'Girls'}`,
+      roundName: round.round,
+      time: round.time,
+      date: round.date,
+      heats,
+      roundId: round.roundId,
+      eventId: round.event.eventId,
+    };
   }
 }

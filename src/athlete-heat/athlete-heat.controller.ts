@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../guards/role.guard';
 import { ApiResponse } from '../shared/dto/api-response.dto';
@@ -15,7 +15,12 @@ export class AthleteHeatController {
   async assignResult(
     @Param('athleteRegistrationId') athleteRegistrationId: string,
     @Param('heat') heat: string,
-    @Body() resultData: { position?: number; time?: string },
+    @Body()
+    resultData: {
+      position?: number;
+      time?: string;
+      qualifiedNextRound?: boolean;
+    },
   ): Promise<ApiResponse<AthleteHeat>> {
     const updatedAthleteHeat = await this.athleteHeatService.assignResult(
       athleteRegistrationId,
@@ -25,6 +30,18 @@ export class AthleteHeatController {
     return ApiResponse.success(
       `Athlete's result assigned to heat successfully`,
       updatedAthleteHeat,
+    );
+  }
+
+  @Get(':roundId')
+  async getAthleteHeatsByRound(
+    @Param('roundId') roundId: string,
+  ): Promise<ApiResponse<AthleteHeat[]>> {
+    const athleteHeats =
+      await this.athleteHeatService.getAthleteHeatsByRound(roundId);
+    return ApiResponse.success(
+      `Athlete-heats for round with ID ${roundId} retrieved successfully`,
+      athleteHeats,
     );
   }
 }
