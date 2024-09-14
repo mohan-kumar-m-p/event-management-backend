@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Athlete } from '../athlete/athlete.entity';
 import { Round } from './round.entity';
+import { Round as RoundEnum } from './enums/round.enum';
 
 @Injectable()
 export class RoundService {
@@ -48,11 +49,13 @@ export class RoundService {
       throw new NotFoundException(`No round with ${id} found`);
     }
 
-    const heats = round.heats.map((heat) => ({
-      heatName: heat.heatName,
-      heatId: heat.heatId,
-      athletePlacements: heat.athletePlacements,
-    }));
+    const heats = round.heats
+      .map((heat) => ({
+        heatName: heat.heatName,
+        heatId: heat.heatId,
+        athletePlacements: heat.athletePlacements,
+      }))
+      .sort((a, b) => a.heatName.localeCompare(b.heatName));
 
     return {
       event: `${round.event.name} ${round.event.category} ${round.event.gender == 'M' ? 'Boys' : 'Girls'}`,
@@ -63,5 +66,14 @@ export class RoundService {
       roundId: round.roundId,
       eventId: round.event.eventId,
     };
+  }
+
+  async findRoundsByType(type: string): Promise<string[]> {
+    const rounds = await this.roundRepository.find({
+      where: { round: RoundEnum[type] },
+    });
+
+    const roundIds = rounds.map((round) => round.roundId);
+    return roundIds;
   }
 }

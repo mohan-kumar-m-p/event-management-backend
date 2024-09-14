@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiResponse } from '../shared/dto/api-response.dto';
 import { RoundService } from './round.service';
@@ -34,6 +34,17 @@ export class RoundController {
     return ApiResponse.success(
       `Round with ID ${id} retrieved successfully`,
       round,
+    );
+  }
+
+  @Get()
+  async findRoundsByType(
+    @Query('type') type: string,
+  ): Promise<ApiResponse<any>> {
+    const roundIds = await this.roundService.findRoundsByType(type);
+    return ApiResponse.success(
+      `Rounds of type '${type}' fetched successfully`,
+      roundIds,
     );
   }
 }
