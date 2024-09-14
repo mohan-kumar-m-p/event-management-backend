@@ -1,6 +1,6 @@
 import { Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiResponse } from 'src/shared/dto/api-response.dto';
+import { ApiResponse } from '../shared/dto/api-response.dto';
 import { EventService } from './event.service';
 
 @UseGuards(AuthGuard('jwt'))
@@ -56,5 +56,11 @@ export class EventController {
   ): Promise<ApiResponse<any>> {
     const event = await this.eventService.markEventAsComplete(id);
     return ApiResponse.success(`Event with ID ${id} marked as complete`, event);
+  }
+
+  @Get('athletes-by-event/:eventId')
+  async getAthletesByEvent(@Param('eventId') eventId: string) {
+    const athletes = await this.eventService.getAthletesByEvent(eventId);
+    return ApiResponse.success('Athletes retrieved successfully', athletes);
   }
 }

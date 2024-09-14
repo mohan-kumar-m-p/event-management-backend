@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventSportGroup } from './enums/event-sport-group.enum';
 import { EventType } from './enums/event-type.enum';
 import { Event } from './event.entity';
-import { EventSportGroup } from './enums/event-sport-group.enum';
 
 @Injectable()
 export class EventService {
@@ -144,6 +144,18 @@ export class EventService {
 
     event.completed = true;
     await this.eventRepository.save(event);
+    return event;
+  }
+
+  async getAthletesByEvent(eventId: string): Promise<any> {
+    const event = await this.eventRepository.find({
+      where: { eventId },
+      relations: ['athletes'],
+    });
+
+    if (event.length === 0) {
+      throw new NotFoundException(`No event with ${eventId} found`);
+    }
     return event;
   }
 }
