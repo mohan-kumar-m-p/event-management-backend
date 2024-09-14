@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
+import { HeatService } from 'src/heat/heat.service';
+import { RoundService } from 'src/round/round.service';
 import { MoreThanOrEqual, Repository } from 'typeorm';
 import { Athlete } from '../../athlete/athlete.entity';
 import { Coach } from '../../coach/coach.entity';
@@ -11,6 +13,8 @@ import { School } from '../../school/school.entity';
 @Injectable()
 export class TaskService {
   private logger = new Logger(TaskService.name);
+  roundService: RoundService;
+  heatService: HeatService;
 
   constructor(
     @InjectRepository(Manager)
@@ -75,6 +79,28 @@ export class TaskService {
     for (const mealSummary of futureMealSummaries) {
       mealSummary.totalMeals = totalMealsPerDay;
       await this.mealSummaryRepository.save(mealSummary);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, { timeZone: 'Asia/Kolkata' })
+  async handleCron() {
+    const today = new Date();
+    const targetDate = new Date(today.getFullYear(), 8, 26); // September is month 8 (0-indexed)
+
+    if (today.toDateString() === targetDate.toDateString()) {
+      this.logger.log(
+        'Running GenerateQualifyingHeats for all track event rounds labeled "Heats"',
+      );
+      await this.generateQualifyingHeatsForHeatsRounds();
+    }
+  }
+
+  private async generateQualifyingHeatsForHeatsRounds() {
+    // Fetch all track event rounds labeled "Heats"
+    const heatsRounds = await this.roundService.findRoundsByType('Heats');
+
+    for (const round of heatsRounds) {
+      await this.heatService.generateQualifierHeats(round);
     }
   }
 }

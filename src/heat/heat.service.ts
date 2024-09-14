@@ -72,8 +72,8 @@ export class HeatService {
       await this.heatRepository.remove(existingHeats); // Delete existing heats
     }
 
-    // Number of lanes (assuming 8 lanes for athletics and 6 for swimming)
-    const lanes = round.event.sportGroup === EventSportGroup.Athletics ? 8 : 6;
+    // Number of lanes (assuming 12 lanes for 800m and 8 for the rest)
+    const lanes = round.event.name === '800m' ? 12 : 8;
     const minAthletesPerHeat = lanes / 2;
     const fullHeats = Math.floor(athletes.length / lanes);
     const remainingAthletes = athletes.length % lanes;
