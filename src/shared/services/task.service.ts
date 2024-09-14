@@ -62,7 +62,6 @@ export class TaskService {
     }
 
     const totalMealsPerDay = totalCount * 5;
-    console.log('LINE65', totalMealsPerDay);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);

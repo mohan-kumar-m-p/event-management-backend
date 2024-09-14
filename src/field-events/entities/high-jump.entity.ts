@@ -1,20 +1,17 @@
 import { BaseEntity } from 'src/shared/base.entity';
-import { Column, Entity, PrimaryColumn, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class HighJump extends BaseEntity {
-@PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('uuid')
   id: string;
-
-  @Column('uuid')
-  eventId: string;
 
   @Column('uuid')
   registrationId: string;
 
-  @Column({ type: 'json', nullable: true })
-  score: Record<string, any>;
+  @Column('uuid')
+  eventId: string;
 
-  @Column({ nullable: true })
-  position: string;
+  @Column({ type: 'json', nullable: true })
+  scores: number[][];
 }
