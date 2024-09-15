@@ -43,8 +43,7 @@ export class TaskService {
     const eligibleSchools = await this.schoolRepository.find({
       where: { isPaid: 'true' },
     });
-
-    if (!eligibleSchools) {
+    if (eligibleSchools.length === 0) {
       return;
     }
 

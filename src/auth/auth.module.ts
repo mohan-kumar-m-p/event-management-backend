@@ -17,13 +17,26 @@ import { OtpEmailStrategy } from './strategies/otpEmail.strategy';
 import { OtpPhoneStrategy } from './strategies/otpPhone.strategy';
 import { UserLocalStrategy } from './strategies/user.local.strategy';
 import { jwtConstants } from './utils/constants';
+import { MealSummary } from 'src/meal/mealSummary.entity';
+import { MealService } from 'src/meal/meal.service';
+import { Event } from 'src/event/event.entity';
+import { CulturalProgram } from 'src/cultural-program/cultural-program.entity';
 
 @Module({
   imports: [
     JwtModule.register({
       secret: jwtConstants.secret,
     }),
-    TypeOrmModule.forFeature([Organizer, School, Manager, Coach, Athlete]),
+    TypeOrmModule.forFeature([
+      Organizer,
+      School,
+      Manager,
+      Coach,
+      Athlete,
+      MealSummary,
+      Event,
+      CulturalProgram,
+    ]),
     SharedModule,
   ],
   controllers: [AuthController],
