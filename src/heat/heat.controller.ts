@@ -33,4 +33,15 @@ export class HeatController {
     const heat = await this.heatService.generateFinalHeat(roundId);
     return ApiResponse.success('Final heat generated successfully', heat);
   }
+
+  @Post(':roundId/generate-relay-qualifier-heats')
+  async generateRelayQualifierHeats(
+    @Param('roundId') roundId: string,
+  ): Promise<ApiResponse<any>> {
+    const heat = await this.heatService.generateRelayQualifierHeats(roundId);
+    return ApiResponse.success(
+      `Qualifier heat for relay round with IF ${roundId} generated successfully`,
+      heat,
+    );
+  }
 }

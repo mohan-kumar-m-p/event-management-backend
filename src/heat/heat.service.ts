@@ -394,6 +394,197 @@ export class HeatService {
     };
   }
 
+  async generateRelayQualifierHeats(id: string): Promise<any> {
+    const round = await this.roundRepository.findOne({
+      where: { roundId: id },
+      relations: ['event'],
+    });
+
+    if (!round) {
+      throw new NotFoundException(`Round with ID ${id} not found`);
+    }
+
+    if (round.round != RoundEnum.Heats) {
+      throw new BadRequestException(
+        `Method requires a 'Heats' round, but round passed is '${round.round}'`,
+      );
+    }
+
+    // Get athletes registered for the event
+    const athletes = await this.athleteRepository.find({
+      where: { events: { eventId: round.event.eventId } },
+      relations: ['events', 'school'],
+    });
+
+    if (athletes.length === 0) {
+      throw new NotFoundException('No athletes registered for this event');
+    }
+
+    // Find distinct schools participating in this round
+    const distinctSchools = new Map<
+      string,
+      { schoolName: string; athletes: any[] }
+    >();
+
+    athletes.forEach((athlete) => {
+      const affiliationNumber = athlete.school.affiliationNumber;
+      const schoolName = athlete.school.name; // Assuming school name is available
+
+      if (!distinctSchools.has(affiliationNumber)) {
+        distinctSchools.set(affiliationNumber, { schoolName, athletes: [] });
+      }
+
+      distinctSchools.get(affiliationNumber)?.athletes.push({
+        registrationId: athlete.registrationId,
+        name: athlete.name,
+        chestNumber: athlete.chestNumber,
+      });
+    });
+
+    console.log(
+      `Total number of school teams registered for this relay round: ${distinctSchools.size}`,
+    );
+
+    const existingHeats = await this.heatRepository.find({
+      where: { round: { roundId: id } },
+    });
+
+    if (existingHeats.length > 0) {
+      // Fetch athlete heats to remove
+      const athleteHeatsToRemove = await this.athleteHeatRepository.find({
+        where: {
+          heat: { heatId: In(existingHeats.map((heat) => heat.heatId)) },
+        },
+      });
+
+      await this.athleteHeatRepository.remove(athleteHeatsToRemove); // Delete athlete heats
+      // Check if there are existing heats
+      await this.heatRepository.remove(existingHeats); // Delete existing heats
+    }
+
+    // Number of lanes (assuming 8 lanes for athletics and 6 for swimming)
+    const lanes = round.event.sportGroup === EventSportGroup.Athletics ? 8 : 6;
+    const minSchoolsPerHeat = lanes / 2;
+    const fullHeats = Math.floor(distinctSchools.size / lanes);
+    const remainingSchools = distinctSchools.size % lanes;
+    const numberOfHeats = remainingSchools > 0 ? fullHeats + 1 : fullHeats;
+
+    // Generate heats
+    const heats: Heat[] = [];
+    for (let i = 0; i < numberOfHeats; i++) {
+      const heat = this.heatRepository.create({
+        heatName: `Heat ${i + 1}`,
+        round: round,
+        athletePlacements: new Array(lanes).fill(null),
+      });
+      heats.push(await this.heatRepository.save(heat));
+    }
+
+    // Assign schools to heats
+    const schools = Array.from(distinctSchools.entries()).map(
+      ([affiliationNumber, { schoolName }]) => ({
+        affiliationNumber,
+        schoolName,
+        athletes: distinctSchools.get(affiliationNumber)?.athletes || [],
+      }),
+    );
+    const athleteHeats = [];
+    let schoolIndex = 0;
+    for (let i = 0; i < numberOfHeats; i++) {
+      const heat = heats[i];
+      const schoolsInHeat =
+        i < fullHeats ? lanes : i === fullHeats ? remainingSchools : 0;
+      for (let j = 0; j < schoolsInHeat; j++) {
+        const school = schools[schoolIndex++];
+        const schoolAthleteHeats = [];
+        school.athletes.map((athlete) => {
+          const athleteHeat = this.athleteHeatRepository.create({
+            athlete,
+            heat,
+            lane: j + 1,
+          });
+          if (athleteHeat) {
+            athleteHeats.push(athleteHeat);
+            schoolAthleteHeats.push(athleteHeat);
+          } else {
+            console.error(
+              `Error assigning athlete ${athlete.name} to heat ${heat.heatName}, lane ${j + 1}`,
+            );
+          }
+        });
+
+        heat.athletePlacements[j] = {
+          affiliationNumber: school.affiliationNumber,
+          schoolName: school.schoolName,
+          athletes: school.athletes,
+          position:
+            schoolAthleteHeats.length > 0
+              ? schoolAthleteHeats[0].position
+              : null,
+          time:
+            schoolAthleteHeats.length > 0 ? schoolAthleteHeats[0].time : null,
+        };
+      }
+    }
+
+    await this.athleteHeatRepository.save(athleteHeats);
+
+    // Balance the last two heats if necessary
+    if (remainingSchools > 0 && remainingSchools < minSchoolsPerHeat) {
+      const lastHeat = heats[numberOfHeats - 1];
+      const secondLastHeat = heats[numberOfHeats - 2];
+      const schoolsToMove = minSchoolsPerHeat - remainingSchools; // Calculate how many schools to move
+
+      for (let i = 0; i < schoolsToMove; i++) {
+        // Get the last school from the second last heat
+        const lastIndex = secondLastHeat.athletePlacements.length - 1; // Always take the last school
+        const schoolToMove = secondLastHeat.athletePlacements[lastIndex];
+
+        // Set the school to null in the second last heat
+        secondLastHeat.athletePlacements[lastIndex] = null; // Mark the position as null
+
+        // Add the school to the last heat
+        lastHeat.athletePlacements.push(schoolToMove); // Add to the last heat
+
+        // Update athleteHeat records for the athletes in the moved school
+        for (const athlete of schoolToMove.athletes) {
+          const athleteHeat = await this.athleteHeatRepository.findOne({
+            where: {
+              athlete: { registrationId: athlete.registrationId },
+              heat: { heatId: secondLastHeat.heatId },
+            },
+            relations: ['athlete', 'heat'],
+          });
+
+          if (athleteHeat) {
+            // Update the heat and lane for the athlete
+            athleteHeat.heat = lastHeat;
+            athleteHeat.lane =
+              lastHeat.athletePlacements.findIndex((lane) => lane === null) + 1; // Assign to the next available lane
+            await this.athleteHeatRepository.save(athleteHeat); // Save the updated athleteHeat
+          } else {
+            console.error(
+              `AthleteHeat record not found for athlete ${athlete.name} in heat ${secondLastHeat.heatId}`,
+            );
+          }
+        }
+      }
+    }
+
+    // Save updated heats
+    await Promise.all(heats.map((heat) => this.heatRepository.save(heat)));
+
+    return heats.map((heat) => ({
+      heatName: heat.heatName,
+      athletePlacements: heat.athletePlacements,
+      heatId: heat.heatId,
+      roundId: heat.round.roundId,
+      eventId: heat.round.event.eventId,
+      round: heat.round.round,
+      event: `${heat.round.event.name} ${heat.round.event.category} ${heat.round.event.gender == 'M' ? 'Boys' : 'Girls'}`,
+    }));
+  }
+
   private parseTimeToMs(timeString: string): number {
     const [minutes, seconds, milliseconds] = timeString.split(':').map(Number);
     return (minutes * 60 + seconds) * 1000 + milliseconds;
