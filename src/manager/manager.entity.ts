@@ -10,11 +10,12 @@ import { School } from '../school/school.entity';
 import { BaseEntity } from '../shared/base.entity';
 
 const defaultMealDetails = {
-  '2024-09-27': 5,
-  '2024-09-28': 5,
-  '2024-09-29': 5,
-  '2024-09-30': 5,
-  '2024-10-01': 5,
+  // TODO : change this back to 27th, 28th, 29th, 30 September
+  '2024-09-15': 5,
+  '2024-09-16': 5,
+  '2024-09-17': 5,
+  '2024-09-18': 5,
+  '2024-09-19': 5,
 };
 
 @Entity()
