@@ -273,12 +273,12 @@ export class AuthService {
 
         school.otp = otp;
         school.otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
-        await this.emailService.sendEmail({
-          to: school.emailId,
-          subject: 'OTP for Login',
-          body: `Your OTP for login is ${otp}`,
-        });
-        // await this.nodeMailService.sendEmail(school.emailId, otp);
+        // await this.emailService.sendEmail({
+        //   to: school.emailId,
+        //   subject: 'OTP for Login',
+        //   body: `Your OTP for login is ${otp}`,
+        // });
+        await this.nodeMailService.sendEmail(school.emailId, otp);
         await this.schoolRepository.save(school);
         return;
       } else if (entity === Entity.Manager) {
