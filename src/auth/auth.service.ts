@@ -70,7 +70,7 @@ export class AuthService {
   async authenticateUser(
     loginRequestEmail: string,
     loginRequestPassword: string,
-    entity: Entity,
+    entity: string,
   ) {
     let user;
     if (entity === Entity.Manager) {
@@ -102,7 +102,7 @@ export class AuthService {
       );
     } else {
       delete user.password;
-      return user;
+      return {...user, entity};
     }
   }
 
@@ -546,4 +546,52 @@ export class AuthService {
       };
     }
   }
+
+  userPasswordLogin(
+    authenticatedUser: Record<string, any>,
+  ): Record<string, string> {
+    if (authenticatedUser.entity === Entity.School) {
+      const jwtPaylod: any = {
+        sub: authenticatedUser.affiliationNumber,
+        roles: [SchoolRole.School],
+      };
+      return {
+        access_token: this.jwtService.sign(jwtPaylod),
+      };
+    }
+
+    if (authenticatedUser.entity === Entity.Coach) {
+      const jwtPaylod: any = {
+        sub: authenticatedUser.coachId,
+        affiliationNumber: authenticatedUser.school.affiliationNumber,
+        roles: [SchoolRole.Coach],
+      };
+      return {
+        access_token: this.jwtService.sign(jwtPaylod),
+      };
+    }
+
+    if (authenticatedUser.entity === Entity.Manager) {
+      const jwtPaylod: any = {
+        sub: authenticatedUser.managerId,
+        affiliationNumber: authenticatedUser.school.affiliationNumber,
+        roles: [SchoolRole.Manager],
+      };
+      return {
+        access_token: this.jwtService.sign(jwtPaylod),
+      };
+    }
+
+    if (authenticatedUser.entity === Entity.Athlete) {
+      const jwtPaylod: any = {
+        sub: authenticatedUser.registrationId,
+        affiliationNumber: authenticatedUser.school.affiliationNumber,
+        roles: [SchoolRole.Athlete],
+      };
+      return {
+        access_token: this.jwtService.sign(jwtPaylod),
+      };
+    }
+  }
+
 }

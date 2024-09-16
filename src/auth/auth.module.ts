@@ -15,6 +15,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { OtpEmailStrategy } from './strategies/otpEmail.strategy';
 import { OtpPhoneStrategy } from './strategies/otpPhone.strategy';
+import { UserLocalStrategy } from './strategies/user.local.strategy';
 import { jwtConstants } from './utils/constants';
 
 @Module({
@@ -34,6 +35,7 @@ import { jwtConstants } from './utils/constants';
     OtpPhoneStrategy,
     EmailService,
     OtpEmailStrategy,
+    UserLocalStrategy,
   ],
 })
 export class AuthModule {}

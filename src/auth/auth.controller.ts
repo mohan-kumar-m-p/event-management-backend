@@ -121,33 +121,24 @@ export class AuthController {
 
   // TODO FIX THIS METHOD. NO FLOW
   @UseGuards(AuthGuard('password-login'))
-  @Post('password/login')
+  @Post('password-login')
   async passwordLogin(
     @Req() authenticated,
     @Res({ passthrough: true }) response: Response,
-  ): Promise<ApiResponse<any>> {
+): Promise<ApiResponse<any>> {
     try {
-      const roles = authenticated.user.roles;
-      const { access_token } = this.authService.organizerLogin(
+      const { access_token } = this.authService.userPasswordLogin(
         authenticated.user,
       );
 
-      if (roles.includes(OrganizerRole.MessManager)) {
-        return ApiResponse.success('Login Successful', {
-          user: authenticated.user,
-          access_token,
-        });
-      } else {
-        response.cookie('access_token', access_token, {
-          httpOnly: true,
-          secure: false,
-        });
-        return ApiResponse.success('Login Successful', authenticated.user);
-      }
+      response.cookie('access_token', access_token, {
+        httpOnly: true,
+        secure: false,
+      });
+      return ApiResponse.success('Login Successful', authenticated.user);
     } catch (error) {
       console.log(`Error occured during user login: ${error}`);
       throw error;
     }
   }
-
 }
