@@ -10,6 +10,7 @@ async function bootstrap() {
   app.enableCors({
     origin: ['https://www.pssemrevents.com', 'http://localhost:3000'],
     methods: 'GET,POST,PUT,PATCH,DELETE',
+    allowedHeaders: 'Content-Type, Authorization',
     credentials: true,
   });
   app.useGlobalFilters(new HttpExceptionFilter());
