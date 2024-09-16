@@ -67,6 +67,45 @@ export class AuthService {
     }
   }
 
+  async authenticateUser(
+    loginRequestEmail: string,
+    loginRequestPassword: string,
+    entity: Entity,
+  ) {
+    let user;
+    if (entity === Entity.Manager) {
+      user = await this.managerRepository.findOne({
+        where: { emailId: loginRequestEmail },
+      });
+    } else if (entity === Entity.Coach) {
+      user = await this.coachRepository.findOne({
+        where: { emailId: loginRequestEmail },
+      });
+    } else if (entity === Entity.Athlete) {
+      user = await this.athleteRepository.findOne({
+        where: { emailId: loginRequestEmail },
+      });
+    } else if (entity === Entity.School) {
+      user = await this.schoolRepository.findOne({
+        where: { emailId: loginRequestEmail },
+      });
+    }
+
+    const userPassword: string = user.password;
+    const isPasswordVerified: boolean = await verifyPassword(
+      loginRequestPassword,
+      userPassword,
+    );
+    if (!isPasswordVerified) {
+      throw new UnauthorizedException(
+        `Invalid login credentials. Please try again`,
+      );
+    } else {
+      delete user.password;
+      return user;
+    }
+  }
+
   organizerLogin(
     authenticatedUser: Record<string, string>,
   ): Record<string, string> {
@@ -344,7 +383,6 @@ export class AuthService {
         await this.nodeMailService.sendEmail(athlete.emailId, otp);
         await this.athleteRepository.save(athlete);
         return;
-
       } else {
         throw new BadRequestException('Invalid entity');
       }

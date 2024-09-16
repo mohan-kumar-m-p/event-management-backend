@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import { AthleteHeat } from 'src/athlete-heat/athlete-heat.entity';
 import {
   Column,
@@ -107,4 +108,8 @@ export class Athlete extends BaseEntity {
 
   @Column({ type: 'json', default: defaultMealDetails })
   mealDetails: Record<string, any>;
+
+  @Exclude()
+  @Column({ update: false })
+  password: string;
 }

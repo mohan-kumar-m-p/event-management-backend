@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import {
   Column,
   Entity,
@@ -66,4 +67,8 @@ export class Manager extends BaseEntity {
 
   @Column({ type: 'json', default: defaultMealDetails })
   mealDetails: Record<string, any>;
+
+  @Exclude()
+  @Column({ update: false })
+  password: string;
 }

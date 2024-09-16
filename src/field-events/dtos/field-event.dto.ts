@@ -1,6 +1,6 @@
 import { IsArray, IsNotEmpty, IsString } from 'class-validator';
 
-export class CreateHighJumpDto {
+export class CreateFieldEventDto {
   @IsString()
   @IsNotEmpty()
   registrationId: string;

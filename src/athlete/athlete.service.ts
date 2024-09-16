@@ -6,7 +6,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as bcrypt from 'bcrypt';
 import { In, Not, Repository } from 'typeorm';
+import { CulturalProgram } from '../cultural-program/cultural-program.entity';
 import { EventCategory } from '../event/enums/event-category.enum';
 import { EventSportGroup } from '../event/enums/event-sport-group.enum';
 import { EventType } from '../event/enums/event-type.enum';
@@ -19,7 +21,6 @@ import { calculateAge } from '../shared/utils/date-utils';
 import { Athlete } from './athlete.entity';
 import { CreateAthleteDto } from './dto/create-athlete.dto';
 import { UpdateAthleteDto } from './dto/update-athlete.dto';
-import { CulturalProgram } from '../cultural-program/cultural-program.entity';
 
 @Injectable()
 export class AthleteService {
@@ -71,6 +72,9 @@ export class AthleteService {
       s3Data = await this.s3Service.uploadFile(photo, 'athlete');
     }
 
+    const password = `${athleteDto.name.slice(0, 5)}${athleteDto.dob}`;
+    const hashedPassword = await this.hashPassword(password);
+
     // Create the athlete entity
     const athlete = this.athleteRepository.create({
       ...athleteDto,
@@ -79,6 +83,7 @@ export class AthleteService {
       mealsRemaining: 5,
       school: school,
       photoUrl: s3Data?.fileKey || null,
+      password: hashedPassword,
     });
 
     await this.athleteRepository.save(athlete);
@@ -92,6 +97,7 @@ export class AthleteService {
     };
     delete result.school;
     delete result.accommodation;
+    delete result.password;
     return result;
   }
 
@@ -134,6 +140,7 @@ export class AthleteService {
 
         delete transformedAthlete.school;
         delete transformedAthlete.accommodation;
+        delete transformedAthlete.password;
 
         return transformedAthlete;
       }),
@@ -182,6 +189,7 @@ export class AthleteService {
 
         delete transformedAthlete.school;
         delete transformedAthlete.accommodation;
+        delete transformedAthlete.password;
 
         return transformedAthlete;
       }),
@@ -228,6 +236,7 @@ export class AthleteService {
 
     delete result.school;
     delete result.accommodation;
+    delete result.password;
     return result;
   }
 
@@ -990,5 +999,9 @@ export class AthleteService {
         return chestNumber;
       }
     }
+  }
+
+  private async hashPassword(password: string): Promise<any> {
+    return await bcrypt.hash(password, 10);
   }
 }

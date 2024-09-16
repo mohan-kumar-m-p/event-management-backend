@@ -1,9 +1,10 @@
+import { Exclude } from 'class-transformer';
 import { Column, Entity, OneToMany, PrimaryColumn } from 'typeorm';
 import { Athlete } from '../athlete/athlete.entity';
 import { Coach } from '../coach/coach.entity';
 import { Manager } from '../manager/manager.entity';
-import { BaseEntity } from '../shared/base.entity';
 import { PaymentStatus } from '../payment/enum/payment-status.enum';
+import { BaseEntity } from '../shared/base.entity';
 
 @Entity()
 export class School extends BaseEntity {
@@ -69,4 +70,8 @@ export class School extends BaseEntity {
 
   @Column({ default: PaymentStatus.NotPaid })
   paymentStatus: string;
+
+  @Exclude()
+  @Column({ update: false })
+  password: string;
 }
