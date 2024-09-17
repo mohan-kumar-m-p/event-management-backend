@@ -12,8 +12,8 @@ import { ApiResponse } from '../shared/dto/api-response.dto';
 import { CreateManagerDto } from './dto/create-manager.dto';
 import { UpdateManagerDto } from './dto/update-manager.dto';
 
-import { Manager } from './manager.entity';
 import { S3Service } from 'src/shared/services/s3.service';
+import { Manager } from './manager.entity';
 
 @Injectable()
 export class ManagerService {
@@ -57,6 +57,10 @@ export class ManagerService {
     if (photo) {
       s3Data = await this.s3Service.uploadFile(photo, 'manager');
     }
+
+    const password = `${managerDto.name.slice(0, 5)}${managerDto.dob}`;
+    const hashedPassword = await this.hashPassword(password);
+
     // Prepare the manager entity
     const manager = this.managerRepository.create({
       ...managerDto,
@@ -64,6 +68,7 @@ export class ManagerService {
       mealsRemaining: 5,
       school: school,
       photoUrl: s3Data?.fileKey || null,
+      password: hashedPassword,
     });
 
     await this.managerRepository.save(manager);
@@ -77,6 +82,7 @@ export class ManagerService {
     };
     delete result.school;
     delete result.accommodation;
+    delete result.password;
     return result;
   }
 
@@ -340,5 +346,9 @@ export class ManagerService {
         });
       }
     }
+  }
+
+  private async hashPassword(password: string): Promise<any> {
+    return await bcrypt.hash(password, 10);
   }
 }

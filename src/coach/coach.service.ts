@@ -53,6 +53,9 @@ export class CoachService {
       s3Data = await this.s3Service.uploadFile(photo, 'coach');
     }
 
+    const password = `${coachDto.name.slice(0, 5)}${coachDto.dob}`;
+    const hashedPassword = await this.hashPassword(password);
+
     // Prepare the coach entity
     const coach = this.coachRepository.create({
       ...coachDto,
@@ -60,6 +63,7 @@ export class CoachService {
       mealsRemaining: 5,
       school: school,
       photoUrl: s3Data?.fileKey || null,
+      password: hashedPassword,
     });
 
     await this.coachRepository.save(coach);
@@ -73,6 +77,7 @@ export class CoachService {
     };
     delete result.school;
     delete result.accommodation;
+    delete result.password;
     return result;
   }
 
@@ -336,5 +341,9 @@ export class CoachService {
         });
       }
     }
+  }
+
+  private async hashPassword(password: string): Promise<any> {
+    return await bcrypt.hash(password, 10);
   }
 }
