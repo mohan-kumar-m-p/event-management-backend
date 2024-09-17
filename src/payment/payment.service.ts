@@ -12,6 +12,7 @@ import { Coach } from '../coach/coach.entity';
 import { Manager } from '../manager/manager.entity';
 import { School } from '../school/school.entity';
 import { PaymentStatus } from './enum/payment-status.enum';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class PaymentService {
@@ -135,6 +136,24 @@ export class PaymentService {
     } catch (error) {
       this.logger.error(`Failed to get payment details: ${error.message}`);
       throw new InternalServerErrorException('Failed to get payment details');
+    }
+  }
+
+  async getSchoolsApprovalPending() {
+    try {
+      const schools = await this.schoolRepository.find({
+        where: { paymentStatus: PaymentStatus.ApprovalPending },
+      });
+
+      // Transform the result to apply the @Exclude decorator
+      return plainToInstance(School, schools);
+    } catch (error) {
+      this.logger.error(
+        `Failed to get schools approval pending: ${error.message}`,
+      );
+      throw new InternalServerErrorException(
+        'Failed to get schools approval pending',
+      );
     }
   }
 }

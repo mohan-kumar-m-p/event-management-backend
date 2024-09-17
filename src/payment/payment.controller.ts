@@ -52,4 +52,15 @@ export class PaymentController {
       paymentDetails,
     );
   }
+
+  @Get('schools-approval-pending')
+  @UseGuards(RolesGuard([OrganizerRole.AccountsManager]))
+  async getSchoolsApprovalPending(): Promise<ApiResponse<any>> {
+    const schoolsApprovalPending =
+      await this.paymentService.getSchoolsApprovalPending();
+    return ApiResponse.success(
+      'Schools in status approval pending fetched successfully',
+      schoolsApprovalPending,
+    );
+  }
 }

@@ -6,6 +6,7 @@ import { Manager } from '../manager/manager.entity';
 import { PaymentStatus } from '../payment/enum/payment-status.enum';
 import { BaseEntity } from '../shared/base.entity';
 
+
 @Entity()
 export class School extends BaseEntity {
   @PrimaryColumn()
