@@ -25,7 +25,7 @@ export class RoundController {
     @Param('id') id: string,
   ): Promise<ApiResponse<any>> {
     const round = await this.roundService.markRoundAsComplete(id);
-    return ApiResponse.success(`Event with ID ${id} marked as complete`, round);
+    return ApiResponse.success(`Round with ID ${id} marked as complete`, round);
   }
 
   @Get(':id')

@@ -1,7 +1,9 @@
 import { OrganizerService } from './organizer.service';
-import { Controller, Get } from '@nestjs/common';
-import { ApiResponse } from 'src/shared/dto/api-response.dto';
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { ApiResponse } from '../shared/dto/api-response.dto';
 
+@UseGuards(AuthGuard('jwt'))
 @Controller('organizer')
 export class OrganizerController {
   constructor(private organizerService: OrganizerService) {}

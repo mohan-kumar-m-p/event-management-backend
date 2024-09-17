@@ -43,7 +43,7 @@ export class Coach extends BaseEntity {
   @Column()
   phone: string;
 
-  @Column()
+  @Column({ unique: true })
   emailId: string;
 
   @Column({ type: 'int', default: 5 })
