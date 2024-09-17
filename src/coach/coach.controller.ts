@@ -18,6 +18,8 @@ import { ApiResponse } from '../shared/dto/api-response.dto';
 import { CoachService } from './coach.service';
 import { CreateCoachDto } from './dto/create-coach.dto';
 import { UpdateCoachDto } from './dto/update-coach.dto';
+import { RolesGuard } from '../guards/role.guard';
+import { OrganizerRole, SchoolRole } from '../shared/roles';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('coach')
@@ -25,6 +27,9 @@ export class CoachController {
   constructor(private readonly coachService: CoachService) {}
 
   @Post()
+  @UseGuards(
+    RolesGuard([OrganizerRole.RegistrationInCharge, SchoolRole.School]),
+  )
   @UseInterceptors(FileInterceptor('photo'))
   async create(
     @Body() coachDto: CreateCoachDto,
@@ -69,6 +74,9 @@ export class CoachController {
   }
 
   @Put(':id')
+  @UseGuards(
+    RolesGuard([OrganizerRole.RegistrationInCharge, SchoolRole.School]),
+  )
   @UseInterceptors(FileInterceptor('photo'))
   async update(
     @Param('id') id: string,
@@ -87,6 +95,9 @@ export class CoachController {
   }
 
   @Delete(':id')
+  @UseGuards(
+    RolesGuard([OrganizerRole.RegistrationInCharge, SchoolRole.School]),
+  )
   async remove(@Param('id') id: string): Promise<ApiResponse<any>> {
     await this.coachService.deleteCoach(id);
     return ApiResponse.success(`Coach with ID ${id} deleted successfully`);

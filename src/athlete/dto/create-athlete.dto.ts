@@ -29,11 +29,11 @@ export class CreateAthleteDto {
   @IsString()
   emailId: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   nameOfFather: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   nameOfMother: string;
 

@@ -7,7 +7,7 @@ import {
 import { OrganizerRole, SchoolRole } from '../shared/roles';
 
 export function RolesGuard(
-  roles: OrganizerRole[] | SchoolRole[],
+  roles: Array<OrganizerRole | SchoolRole>,
 ): Type<CanActivate> {
   @Injectable()
   class RoleGuardMixin implements CanActivate {

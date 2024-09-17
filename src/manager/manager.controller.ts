@@ -18,6 +18,8 @@ import { ApiResponse } from 'src/shared/dto/api-response.dto';
 import { CreateManagerDto } from './dto/create-manager.dto';
 import { UpdateManagerDto } from './dto/update-manager.dto';
 import { ManagerService } from './manager.service';
+import { RolesGuard } from '../guards/role.guard';
+import { OrganizerRole, SchoolRole } from '../shared/roles';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('manager')
@@ -25,6 +27,9 @@ export class ManagerController {
   constructor(private readonly managerService: ManagerService) {}
 
   @Post()
+  @UseGuards(
+    RolesGuard([OrganizerRole.RegistrationInCharge, SchoolRole.School]),
+  )
   @UseInterceptors(FileInterceptor('photo'))
   async create(
     @Body() managerDto: CreateManagerDto,
@@ -66,6 +71,9 @@ export class ManagerController {
   }
 
   @Put(':id')
+  @UseGuards(
+    RolesGuard([OrganizerRole.RegistrationInCharge, SchoolRole.School]),
+  )
   @UseInterceptors(FileInterceptor('photo'))
   async update(
     @Param('id') id: string,
@@ -81,6 +89,9 @@ export class ManagerController {
   }
 
   @Delete(':id')
+  @UseGuards(
+    RolesGuard([OrganizerRole.RegistrationInCharge, SchoolRole.School]),
+  )
   async remove(@Param('id') id: string): Promise<ApiResponse<any>> {
     await this.managerService.deleteManager(id);
     return ApiResponse.success('Manager deleted successfully');

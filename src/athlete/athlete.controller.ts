@@ -18,6 +18,8 @@ import { ApiResponse } from '../shared/dto/api-response.dto';
 import { AthleteService } from './athlete.service';
 import { CreateAthleteDto } from './dto/create-athlete.dto';
 import { UpdateAthleteDto } from './dto/update-athlete.dto';
+import { RolesGuard } from '../guards/role.guard';
+import { OrganizerRole, SchoolRole } from '../shared/roles';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('athlete')
@@ -25,6 +27,9 @@ export class AthleteController {
   constructor(private readonly athleteService: AthleteService) {}
 
   @Post()
+  @UseGuards(
+    RolesGuard([OrganizerRole.RegistrationInCharge, SchoolRole.School]),
+  )
   @UseInterceptors(FileInterceptor('photo'))
   async create(
     @Body() athleteDto: CreateAthleteDto,
@@ -65,6 +70,9 @@ export class AthleteController {
   }
 
   @Put(':id')
+  @UseGuards(
+    RolesGuard([OrganizerRole.RegistrationInCharge, SchoolRole.School]),
+  )
   @UseInterceptors(FileInterceptor('photo'))
   async update(
     @Param('id') id: string,
@@ -91,6 +99,9 @@ export class AthleteController {
   }
 
   @Post(':id/events')
+  @UseGuards(
+    RolesGuard([OrganizerRole.RegistrationInCharge, SchoolRole.School]),
+  )
   async assignEvents(
     @Param('id') athleteId: string,
     @Body('eventIds') eventIds: string[],
@@ -111,6 +122,9 @@ export class AthleteController {
   }
 
   @Delete(':id/events')
+  @UseGuards(
+    RolesGuard([OrganizerRole.RegistrationInCharge, SchoolRole.School]),
+  )
   async unassignEvents(
     @Param('id') athleteId: string,
     @Body('eventIds') eventIds: string[],
@@ -123,12 +137,18 @@ export class AthleteController {
   }
 
   @Delete(':id')
+  @UseGuards(
+    RolesGuard([OrganizerRole.RegistrationInCharge, SchoolRole.School]),
+  )
   async remove(@Param('id') id: string): Promise<ApiResponse<any>> {
     await this.athleteService.deleteAthlete(id);
     return ApiResponse.success('Athlete deleted successfully');
   }
 
   @Put(':id/update-events')
+  @UseGuards(
+    RolesGuard([OrganizerRole.RegistrationInCharge, SchoolRole.School]),
+  )
   async updateAthleteEvents(
     @Param('id') id: string,
     @Body('eventIds') eventIds: string[],

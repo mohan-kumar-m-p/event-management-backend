@@ -17,7 +17,7 @@ export class UpdateAthleteDto {
   @IsString()
   gender: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   aadhaarNumber: string;
 
@@ -29,11 +29,11 @@ export class UpdateAthleteDto {
   @IsString()
   emailId: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   nameOfFather: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
   nameOfMother: string;
 
