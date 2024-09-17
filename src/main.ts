@@ -8,7 +8,12 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(cookieParser());
   app.enableCors({
-    origin: ['https://www.pssemrevents.com', 'http://localhost:3000'],
+    origin: [
+      'https://www.pssemrevents.com',
+      'http://localhost:3001',
+      'http://localhost:3000',
+      'https://www.pssemrevents.com/',
+    ],
     methods: 'GET,POST,PUT,PATCH,DELETE',
     allowedHeaders: 'Content-Type, Authorization',
     credentials: true,
