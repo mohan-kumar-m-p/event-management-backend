@@ -112,6 +112,7 @@ export class AuthController {
         path: '/',
         sameSite: 'lax',
       });
+      delete authenticated.user.password;
       return ApiResponse.success('Login Successful', authenticated.user);
     } catch (error) {
       console.log(`Error occured during user login: ${error}`);

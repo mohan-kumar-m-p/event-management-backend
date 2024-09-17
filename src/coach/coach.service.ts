@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { hashPassword } from '../auth/utils/utils';
 import { School } from '../school/school.entity';
 import { ApiResponse } from '../shared/dto/api-response.dto';
 import { S3Service } from '../shared/services/s3.service';
@@ -53,8 +54,9 @@ export class CoachService {
       s3Data = await this.s3Service.uploadFile(photo, 'coach');
     }
 
-    const password = `${coachDto.name.slice(0, 5)}${coachDto.dob}`;
-    const hashedPassword = await this.hashPassword(password);
+    const passWordNamePart = coachDto.name.split(' ')[0].slice(0, 5);
+    const password = `${passWordNamePart}${coachDto.dob}`;
+    const hashedPassword = await hashPassword(password);
 
     // Prepare the coach entity
     const coach = this.coachRepository.create({
@@ -341,9 +343,5 @@ export class CoachService {
         });
       }
     }
-  }
-
-  private async hashPassword(password: string): Promise<any> {
-    return await bcrypt.hash(password, 10);
   }
 }

@@ -6,13 +6,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { hashPassword } from 'src/auth/utils/utils';
 import { Repository } from 'typeorm';
 import { School } from '../school/school.entity';
 import { ApiResponse } from '../shared/dto/api-response.dto';
+import { S3Service } from '../shared/services/s3.service';
 import { CreateManagerDto } from './dto/create-manager.dto';
 import { UpdateManagerDto } from './dto/update-manager.dto';
-
-import { S3Service } from 'src/shared/services/s3.service';
 import { Manager } from './manager.entity';
 
 @Injectable()
@@ -58,8 +58,9 @@ export class ManagerService {
       s3Data = await this.s3Service.uploadFile(photo, 'manager');
     }
 
-    const password = `${managerDto.name.slice(0, 5)}${managerDto.dob}`;
-    const hashedPassword = await this.hashPassword(password);
+    const passWordNamePart = managerDto.name.split(' ')[0].slice(0, 5);
+    const password = `${passWordNamePart}${managerDto.dob}`;
+    const hashedPassword = await hashPassword(password);
 
     // Prepare the manager entity
     const manager = this.managerRepository.create({
@@ -346,9 +347,5 @@ export class ManagerService {
         });
       }
     }
-  }
-
-  private async hashPassword(password: string): Promise<any> {
-    return await bcrypt.hash(password, 10);
   }
 }
