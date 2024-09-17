@@ -56,6 +56,5 @@ pids
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 
-school-passwords.ts
 schools_hashed.csv
 schools.csv
