@@ -126,4 +126,29 @@ export class CulturalProgramService {
 
     return programs;
   }
+
+  async findAllBySchool(affiliationNumber: string): Promise<any[]> {
+    const programs = await this.culturalProgramRepository.find({
+      where: { school: { affiliationNumber } },
+      relations: ['athlete'],
+    });
+
+    if (!programs) {
+      throw new NotFoundException(
+        `No cultural programs found for school with affiliation number ${affiliationNumber}`,
+      );
+    }
+
+    const result = programs.map((program) => {
+      const { athlete, ...programDetails } = program;
+      return {
+        ...programDetails,
+        athleteId: athlete.registrationId,
+        athleteName: athlete.name,
+        chestNumber: athlete.chestNumber,
+      };
+    });
+
+    return result;
+  }
 }

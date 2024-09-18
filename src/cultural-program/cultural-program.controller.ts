@@ -70,4 +70,16 @@ export class CulturalProgramController {
       culturalPrograms,
     );
   }
+
+  @Get('school/:affiliationNumber')
+  async findAllBySchool(
+    @Param('affiliationNumber') affiliationNumber: string,
+  ): Promise<ApiResponse<any>> {
+    const culturalPrograms =
+      await this.culturalProgramService.findAllBySchool(affiliationNumber);
+    return ApiResponse.success(
+      `Cultural programs for school with affiliation number ${affiliationNumber} fetched successfully`,
+      culturalPrograms,
+    );
+  }
 }
