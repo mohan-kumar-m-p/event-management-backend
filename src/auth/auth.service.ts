@@ -17,6 +17,7 @@ import { Manager } from '../manager/manager.entity';
 import { OrganizerService } from '../organizer/organizer.service';
 import { School } from '../school/school.entity';
 import { EmailService } from '../shared/services/email.service';
+import { S3Service } from '../shared/services/s3.service';
 import { SmsService } from '../shared/services/sms.service';
 import { Entity } from './entity.enum';
 import { verifyPassword } from './utils/utils';
@@ -39,6 +40,7 @@ export class AuthService {
     private emailService: EmailService,
     private smsService: SmsService,
     private nodeMailService: NodeMailerService,
+    private s3Service: S3Service,
   ) {}
 
   async authenticateOrganizer(
@@ -100,10 +102,26 @@ export class AuthService {
       throw new UnauthorizedException(
         `Invalid login credentials. Please try again`,
       );
-    } else {
-      delete user.password;
-      return {...user, entity};
     }
+    let photo = null;
+    if (user.photoUrl) {
+      try {
+        const bucketName = process.env.S3_BUCKET_NAME;
+        const fileData = await this.s3Service.getFile(
+          bucketName,
+          user.photoUrl,
+        );
+        const base64Image = fileData.Body.toString('base64');
+        photo = `data:${fileData.ContentType};base64,${base64Image}`;
+      } catch (error) {
+        this.logger.error(
+          `Error occurred while retrieving athlete's photo from S3: ${error.message}`,
+        );
+      }
+    }
+
+    delete user.password;
+    return { ...user, entity, photo };
   }
 
   organizerLogin(
@@ -443,10 +461,27 @@ export class AuthService {
           throw new UnauthorizedException('Invalid OTP, please try again');
         }
 
+        let photo = null;
+        if (coach.photoUrl) {
+          try {
+            const bucketName = process.env.S3_BUCKET_NAME;
+            const fileData = await this.s3Service.getFile(
+              bucketName,
+              coach.photoUrl,
+            );
+            const base64Image = fileData.Body.toString('base64');
+            photo = `data:${fileData.ContentType};base64,${base64Image}`;
+          } catch (error) {
+            this.logger.error(
+              `Error occurred while retrieving athlete's photo from S3: ${error.message}`,
+            );
+          }
+        }
+
         coach.otp = null;
         coach.otpExpiry = null;
         await this.coachRepository.save(coach);
-        return { ...coach, entity: Entity.Coach };
+        return { ...coach, entity: Entity.Coach, photo };
       } else if (entity === Entity.Manager) {
         const manager = await this.managerRepository.findOne({
           where: { emailId: email },
@@ -465,10 +500,27 @@ export class AuthService {
           throw new UnauthorizedException('Invalid OTP, please try again');
         }
 
+        let photo = null;
+        if (manager.photoUrl) {
+          try {
+            const bucketName = process.env.S3_BUCKET_NAME;
+            const fileData = await this.s3Service.getFile(
+              bucketName,
+              manager.photoUrl,
+            );
+            const base64Image = fileData.Body.toString('base64');
+            photo = `data:${fileData.ContentType};base64,${base64Image}`;
+          } catch (error) {
+            this.logger.error(
+              `Error occurred while retrieving athlete's photo from S3: ${error.message}`,
+            );
+          }
+        }
+
         manager.otp = null;
         manager.otpExpiry = null;
         await this.managerRepository.save(manager);
-        return { ...manager, entity: Entity.Manager };
+        return { ...manager, entity: Entity.Manager, photo };
       } else if (entity === Entity.Athlete) {
         const athlete = await this.athleteRepository.findOne({
           where: { emailId: email },
@@ -487,10 +539,27 @@ export class AuthService {
           throw new UnauthorizedException('Invalid OTP, please try again');
         }
 
+        let photo = null;
+        if (athlete.photoUrl) {
+          try {
+            const bucketName = process.env.S3_BUCKET_NAME;
+            const fileData = await this.s3Service.getFile(
+              bucketName,
+              athlete.photoUrl,
+            );
+            const base64Image = fileData.Body.toString('base64');
+            photo = `data:${fileData.ContentType};base64,${base64Image}`;
+          } catch (error) {
+            this.logger.error(
+              `Error occurred while retrieving athlete's photo from S3: ${error.message}`,
+            );
+          }
+        }
+
         athlete.otp = null;
         athlete.otpExpiry = null;
         await this.athleteRepository.save(athlete);
-        return { ...athlete, entity: Entity.Athlete };
+        return { ...athlete, entity: Entity.Athlete, photo };
       } else {
         throw new BadRequestException('Invalid entity');
       }
@@ -594,4 +663,6 @@ export class AuthService {
     }
   }
 
+  // getRole(entity: string, id: string): string {
+  //   if (entity === Entity.School) {
 }

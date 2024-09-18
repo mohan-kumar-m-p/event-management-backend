@@ -1,4 +1,13 @@
-import { Body, Controller, Post, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
 import { ApiResponse } from '../shared/dto/api-response.dto';
@@ -126,7 +135,7 @@ export class AuthController {
   async passwordLogin(
     @Req() authenticated,
     @Res({ passthrough: true }) response: Response,
-): Promise<ApiResponse<any>> {
+  ): Promise<ApiResponse<any>> {
     try {
       const { access_token } = this.authService.userPasswordLogin(
         authenticated.user,
@@ -142,4 +151,10 @@ export class AuthController {
       throw error;
     }
   }
+
+  // @UseGuards(AuthGuard('jwt'))
+  // @Get('role/:entity/:id')
+  // getRole(@Param('entity') entity: string, @Param('id') id: string): any {
+  //   const roles = this.authService.getRole(entity, id);
+  // }
 }
