@@ -53,6 +53,17 @@ export class PaymentController {
     );
   }
 
+  @Get('schools-not-paid')
+  @UseGuards(RolesGuard([OrganizerRole.AccountsManager]))
+  async getSchoolsNotPaid(): Promise<ApiResponse<any>> {
+    const schoolsApprovalPending =
+      await this.paymentService.getSchoolsNotPaid();
+    return ApiResponse.success(
+      'Schools in status not paid fetched successfully',
+      schoolsApprovalPending,
+    );
+  }
+
   @Get('schools-approval-pending')
   @UseGuards(RolesGuard([OrganizerRole.AccountsManager]))
   async getSchoolsApprovalPending(): Promise<ApiResponse<any>> {
@@ -60,6 +71,16 @@ export class PaymentController {
       await this.paymentService.getSchoolsApprovalPending();
     return ApiResponse.success(
       'Schools in status approval pending fetched successfully',
+      schoolsApprovalPending,
+    );
+  }
+
+  @Get('schools-paid')
+  @UseGuards(RolesGuard([OrganizerRole.AccountsManager]))
+  async getSchoolsPaid(): Promise<ApiResponse<any>> {
+    const schoolsApprovalPending = await this.paymentService.getSchoolsPaid();
+    return ApiResponse.success(
+      'Schools in status paid fetched successfully',
       schoolsApprovalPending,
     );
   }

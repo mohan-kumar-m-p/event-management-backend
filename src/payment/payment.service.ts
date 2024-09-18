@@ -6,13 +6,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { plainToInstance } from 'class-transformer';
 import { Repository } from 'typeorm';
 import { Athlete } from '../athlete/athlete.entity';
 import { Coach } from '../coach/coach.entity';
 import { Manager } from '../manager/manager.entity';
 import { School } from '../school/school.entity';
 import { PaymentStatus } from './enum/payment-status.enum';
-import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class PaymentService {
@@ -139,6 +139,19 @@ export class PaymentService {
     }
   }
 
+  async getSchoolsNotPaid() {
+    try {
+      const schools = await this.schoolRepository.find({
+        where: { paymentStatus: PaymentStatus.NotPaid },
+      });
+      // Transform the result to apply the @Exclude decorator
+      return plainToInstance(School, schools);
+    } catch (error) {
+      this.logger.error(`Failed to get schools not paid: ${error.message}`);
+      throw new InternalServerErrorException('Failed to get schools not paid');
+    }
+  }
+
   async getSchoolsApprovalPending() {
     try {
       const schools = await this.schoolRepository.find({
@@ -154,6 +167,19 @@ export class PaymentService {
       throw new InternalServerErrorException(
         'Failed to get schools approval pending',
       );
+    }
+  }
+
+  async getSchoolsPaid() {
+    try {
+      const schools = await this.schoolRepository.find({
+        where: { paymentStatus: PaymentStatus.Paid },
+      });
+      // Transform the result to apply the @Exclude decorator
+      return plainToInstance(School, schools);
+    } catch (error) {
+      this.logger.error(`Failed to get schools paid: ${error.message}`);
+      throw new InternalServerErrorException('Failed to get schools paid');
     }
   }
 }
