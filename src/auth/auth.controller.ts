@@ -152,9 +152,13 @@ export class AuthController {
     }
   }
 
-  // @UseGuards(AuthGuard('jwt'))
-  // @Get('role/:entity/:id')
-  // getRole(@Param('entity') entity: string, @Param('id') id: string): any {
-  //   const roles = this.authService.getRole(entity, id);
-  // }
+  @UseGuards(AuthGuard('jwt'))
+  @Get('role')
+  getRole(@Req() request): any {
+    const user = request.user; // Extract user from request
+    if (!user || !user.roles) {
+      return ApiResponse.error('User roles not found', 404);
+    }
+    return ApiResponse.success('Roles retrieved successfully', user.roles); // Return roles
+  }
 }
