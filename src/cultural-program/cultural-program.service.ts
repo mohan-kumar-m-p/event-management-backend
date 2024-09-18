@@ -96,18 +96,20 @@ export class CulturalProgramService {
     if (!programs) {
       throw new NotFoundException('No cultural programs found');
     }
-    const result = programs.map((program) => {
-      const transformedProgram = {
-        ...program,
-        athleteId: program.athlete.registrationId,
-        athleteName: program.athlete.name,
-        affiliationNumber: program.school.affiliationNumber,
-        schoolName: program.school.name,
-      };
-      delete transformedProgram.athlete;
-      delete transformedProgram.school;
-      return transformedProgram;
-    });
+    const result = programs
+      .filter((program) => program.athlete && !program.athlete?.deletedOn)
+      .map((program) => {
+        const transformedProgram = {
+          ...program,
+          athleteId: program.athlete.registrationId,
+          athleteName: program.athlete.name,
+          affiliationNumber: program.school.affiliationNumber,
+          schoolName: program.school.name,
+        };
+        delete transformedProgram.athlete;
+        delete transformedProgram.school;
+        return transformedProgram;
+      });
     return result;
   }
 
