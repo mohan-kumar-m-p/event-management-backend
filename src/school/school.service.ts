@@ -133,13 +133,25 @@ export class SchoolService {
     if (!school) {
       throw new NotFoundException(`School with ID ${id} not found`);
     }
-    const schoolEvents = school.athletes.flatMap((athlete) => athlete.events);
-    if (schoolEvents.length === 0) {
+
+    // Use a Set to collect distinct events
+    const eventSet = new Map<string, Event>();
+
+    school.athletes.forEach((athlete) => {
+      athlete.events.forEach((event) => {
+        eventSet.set(event.eventId, event); // Use eventId as the key to ensure uniqueness
+      });
+    });
+
+    const distinctEvents = Array.from(eventSet.values());
+
+    if (distinctEvents.length === 0) {
       throw new NotFoundException(
         `No events found for school with affiliation number ${id}`,
       );
     }
-    return schoolEvents;
+
+    return distinctEvents;
   }
 
   async getCoachesForSchool(id: string): Promise<Coach[]> {

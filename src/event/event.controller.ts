@@ -63,4 +63,19 @@ export class EventController {
     const athletes = await this.eventService.getAthletesByEvent(eventId);
     return ApiResponse.success('Athletes retrieved successfully', athletes);
   }
+
+  @Get('school-athletes-by-event/:eventId/:affiliationNumber')
+  async getSchoolAthletesByEvent(
+    @Param('eventId') eventId: string,
+    @Param('affiliationNumber') affiliationNumber: string,
+  ): Promise<ApiResponse<any>> {
+    const athletes = await this.eventService.getSchoolAthletesByEvent(
+      eventId,
+      affiliationNumber,
+    );
+    return ApiResponse.success(
+      `Athletes from school with ID ${affiliationNumber} that are registered for event with ID ${eventId} retrieved successfully`,
+      athletes,
+    );
+  }
 }

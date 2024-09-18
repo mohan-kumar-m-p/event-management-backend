@@ -158,4 +158,36 @@ export class EventService {
     }
     return event;
   }
+
+  async getSchoolAthletesByEvent(
+    eventId: string,
+    affiliationNumber: string,
+  ): Promise<any> {
+    const event = await this.eventRepository.findOne({
+      where: { eventId },
+      relations: ['athletes', 'athletes.school'],
+    });
+
+    if (!event) {
+      throw new NotFoundException(`No event with ${eventId} found`);
+    }
+    // Filter athletes by school affiliation
+    const schoolAthletes = event.athletes
+      .filter(
+        (athlete) =>
+          athlete.school &&
+          athlete.school.affiliationNumber === affiliationNumber,
+      )
+      .map((athlete) => ({
+        name: athlete.name, // Include athlete's name
+        registrationId: athlete.registrationId,
+        chestNumber: athlete.chestNumber,
+        emailId: athlete.emailId,
+        dob: athlete.dob,
+        affiliationNumber: athlete.school.affiliationNumber, // Include athlete's registration ID
+        schoolName: athlete.school.name, // Include school name
+      }));
+
+    return schoolAthletes;
+  }
 }
