@@ -59,7 +59,7 @@ export class CulturalProgramController {
     );
   }
 
-  @Get('student/:studentId')
+  @Get('athlete/:registrationId')
   async findAllByStudent(
     @Param('registrationId') registrationId: string,
   ): Promise<ApiResponse<any>> {
