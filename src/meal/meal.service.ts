@@ -140,11 +140,13 @@ export class MealService {
 
     person.mealsRemaining -= 1;
     const today = new Date();
-    const todayString = today.toISOString().split('T')[0];
-    if (!person.mealDetails[todayString]) {
+    const ISTOffset = 5.5 * 60 * 60 * 1000;
+    const todayIST = new Date(today.getTime() + ISTOffset);
+    const todayISTString = todayIST.toISOString().split('T')[0];
+    if (!person.mealDetails[todayISTString]) {
       throw new BadRequestException('No meal details found for today');
     }
-    person.mealDetails[todayString] -= 1;
+    person.mealDetails[todayISTString] -= 1;
     const result = {
       name: person.name,
       entity: role,
@@ -152,10 +154,11 @@ export class MealService {
       mealDetails: person.mealDetails,
     };
     const todayWithoutTime = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate(),
+      todayIST.getFullYear(),
+      todayIST.getMonth(),
+      todayIST.getDate(),
     ); // Get the date without time
+
     const mealSummary = await this.mealSummaryRepository.findOne({
       where: { date: todayWithoutTime },
     });
