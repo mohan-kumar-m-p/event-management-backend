@@ -13,9 +13,9 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { RolesGuard } from 'src/guards/role.guard';
-import { ApiResponse } from 'src/shared/dto/api-response.dto';
-import { OrganizerRole } from 'src/shared/roles';
+import { RolesGuard } from '../guards/role.guard';
+import { ApiResponse } from '../shared/dto/api-response.dto';
+import { OrganizerRole } from '../shared/roles';
 import { CulturalProgramDto } from './cultural-program.dto';
 import { CulturalProgramService } from './cultural-program.service';
 
@@ -84,10 +84,9 @@ export class CulturalProgramController {
     );
   }
 
-  @Put(':id/update-cultural-events')
+  @Put()
   @UseInterceptors(FileInterceptor('photo'))
-  async updateAthleteCulturalEvents(
-    @Param('id') id: string,
+  async update(
     @Body() culturalProgramDto: CulturalProgramDto,
     @UploadedFile() media: Express.Multer.File,
     @Request() req,
@@ -96,17 +95,16 @@ export class CulturalProgramController {
       ? culturalProgramDto.affiliationNumber
       : req?.user?.sub;
 
-    const updatedCulturalProgram =
+    const culturalProgram =
       await this.culturalProgramService.updateCulturalProgram(
-        id,
         culturalProgramDto,
         schoolAffiliationNumber,
         media,
       );
-
     return ApiResponse.success(
-      'Athlete events updated successfully',
-      updatedCulturalProgram,
+      'Cultural program created successfully',
+      culturalProgram,
+      HttpStatus.CREATED,
     );
   }
 }

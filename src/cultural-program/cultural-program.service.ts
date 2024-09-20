@@ -153,78 +153,24 @@ export class CulturalProgramService {
   }
 
   async updateCulturalProgram(
-    id: string,
     culturalProgramDto: CulturalProgramDto,
-    affiliationNumber: string,
+    schoolAffiliationNumber: string,
     media?: Express.Multer.File,
   ): Promise<any> {
-    const existingCulturalProgram =
-      await this.culturalProgramRepository.findOne({
-        where: { id },
-        relations: ['athlete', 'school'],
+    try {
+      await this.culturalProgramRepository.delete({
+        athlete: { registrationId: culturalProgramDto.athleteId },
       });
 
-    if (!existingCulturalProgram) {
-      throw new NotFoundException('Cultural program not found');
+      const culturalPrograms = await this.createCulturalProgram(
+        culturalProgramDto,
+        schoolAffiliationNumber,
+        media,
+      );
+      return culturalPrograms;
+    } catch (error) {
+      this.logger.error(`error while updating cultural program: ${error}`);
+      throw error;
     }
-
-    const school = await this.schoolRepository.findOne({
-      where: { affiliationNumber },
-    });
-
-    if (!school) {
-      throw new NotFoundException('School not found');
-    }
-
-    const athlete = await this.athleteRepository.findOne({
-      where: { registrationId: culturalProgramDto.athleteId },
-    });
-
-    if (!athlete) {
-      throw new NotFoundException('Athlete not found');
-    }
-
-    // Handle media file upload if provided
-    let s3Data = null;
-    if (media) {
-      s3Data = await this.s3Service.uploadFile(media, 'cultural-program');
-    }
-
-    // Iterate through the categories and update the cultural programs for each category
-    const updatedCulturalPrograms = await Promise.all(
-      culturalProgramDto.category.map(async (category) => {
-        const updatedCulturalProgram = {
-          ...existingCulturalProgram, // Start with the existing data
-          ...culturalProgramDto, // Override with new DTO data
-          category, // Specific category in the current loop iteration
-          athlete: athlete, // Updated athlete
-          school: school, // Updated school
-          mediaUrl:
-            s3Data?.fileKey ||
-            culturalProgramDto.mediaUrl ||
-            existingCulturalProgram.mediaUrl, // Keep existing media URL if not provided
-        };
-
-        // Save the updated cultural program
-        await this.culturalProgramRepository.save(updatedCulturalProgram);
-
-        // Return the updated program with specific athlete/school details
-        return {
-          ...updatedCulturalProgram,
-          athleteId: updatedCulturalProgram.athlete.registrationId,
-          athleteName: updatedCulturalProgram.athlete.name,
-          affiliationNumber: updatedCulturalProgram.school.affiliationNumber,
-          schoolName: updatedCulturalProgram.school.name,
-        };
-      }),
-    );
-
-    // Remove the athlete and school relations from the return objects
-    updatedCulturalPrograms.forEach((result) => {
-      delete result.athlete;
-      delete result.school;
-    });
-
-    return updatedCulturalPrograms;
   }
 }
