@@ -18,9 +18,8 @@ export class CulturalProgramDto {
   time: string;
 
   @IsNotEmpty()
-  @IsArray()
-  @IsString({ each: true })
-  category: string[];
+  @IsString()
+  category: string;
 
   @IsOptional()
   @IsString()

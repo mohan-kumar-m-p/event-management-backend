@@ -5,16 +5,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Athlete } from 'src/athlete/athlete.entity';
-import { School } from 'src/school/school.entity';
 import { Repository } from 'typeorm';
+import { Athlete } from '../athlete/athlete.entity';
+import { School } from '../school/school.entity';
+import { S3Service } from '../shared/services/s3.service';
 import { CulturalProgramDto } from './cultural-program.dto';
 import { CulturalProgram } from './cultural-program.entity';
 
 @Injectable()
 export class CulturalProgramService {
   private logger = new Logger(CulturalProgramService.name);
-  s3Service: any;
+
   constructor(
     @InjectRepository(CulturalProgram)
     private readonly culturalProgramRepository: Repository<CulturalProgram>,
@@ -22,6 +23,7 @@ export class CulturalProgramService {
     private readonly athleteRepository: Repository<Athlete>,
     @InjectRepository(School)
     private readonly schoolRepository: Repository<School>,
+    private readonly s3Service: S3Service,
   ) {}
 
   async createCulturalProgram(
@@ -57,9 +59,10 @@ export class CulturalProgramService {
       s3Data = await this.s3Service.uploadFile(media, 'cultural-program');
     }
 
+    const categories = JSON.parse(culturalProgramDto.category);
     // Create a cultural program for each category
     const culturalPrograms = await Promise.all(
-      culturalProgramDto.category.map(async (category) => {
+      categories.map(async (category) => {
         const culturalProgram = this.culturalProgramRepository.create({
           ...culturalProgramDto,
           category,
