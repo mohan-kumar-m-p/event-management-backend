@@ -330,12 +330,12 @@ export class AuthService {
 
         school.otp = otp;
         school.otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
-        // await this.emailService.sendEmail({
-        //   to: school.emailId,
-        //   subject: 'OTP for Login',
-        //   body: `Your OTP for login is ${otp}`,
-        // });
-        await this.nodeMailService.sendEmail(school.emailId, otp);
+        await this.emailService.sendEmail({
+          to: school.emailId,
+          subject: 'OTP for Login',
+          body: `Your OTP for login is ${otp}`,
+        });
+        // await this.nodeMailService.sendEmail(school.emailId, otp);
         await this.schoolRepository.save(school);
         return;
       } else if (entity === Entity.Manager) {
@@ -351,12 +351,12 @@ export class AuthService {
 
         manager.otp = otp;
         manager.otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
-        // await this.emailService.sendEmail({
-        //   to: manager.emailId,
-        //   subject: 'OTP for Login',
-        //   body: `Your OTP for login is ${otp}`,
-        // });
-        await this.nodeMailService.sendEmail(manager.emailId, otp);
+        await this.emailService.sendEmail({
+          to: manager.emailId,
+          subject: 'OTP for Login',
+          body: `Your OTP for login is ${otp}`,
+        });
+        // await this.nodeMailService.sendEmail(manager.emailId, otp);
         await this.managerRepository.save(manager);
         return;
       } else if (entity === Entity.Coach) {
@@ -372,12 +372,12 @@ export class AuthService {
 
         coach.otp = otp;
         coach.otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
-        // await this.emailService.sendEmail({
-        //   to: coach.emailId,
-        //   subject: 'OTP for Login',
-        //   body: `Your OTP for login is ${otp}`,
-        // });
-        await this.nodeMailService.sendEmail(coach.emailId, otp);
+        await this.emailService.sendEmail({
+          to: coach.emailId,
+          subject: 'OTP for Login',
+          body: `Your OTP for login is ${otp}`,
+        });
+        // await this.nodeMailService.sendEmail(coach.emailId, otp);
         await this.coachRepository.save(coach);
         return;
       } else if (entity === Entity.Athlete) {
@@ -393,12 +393,12 @@ export class AuthService {
 
         athlete.otp = otp;
         athlete.otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
-        // await this.emailService.sendEmail({
-        //   to: athlete.emailId,
-        //   subject: 'OTP for Login',
-        //   body: `Your OTP for login is ${otp}`,
-        // });
-        await this.nodeMailService.sendEmail(athlete.emailId, otp);
+        await this.emailService.sendEmail({
+          to: athlete.emailId,
+          subject: 'OTP for Login',
+          body: `Your OTP for login is ${otp}`,
+        });
+        // await this.nodeMailService.sendEmail(athlete.emailId, otp);
         await this.athleteRepository.save(athlete);
         return;
       } else {
