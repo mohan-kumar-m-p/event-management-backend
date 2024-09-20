@@ -366,13 +366,9 @@ export class AthleteService {
       throw new NotFoundException(`Athlete with ID ${id} not found`);
     }
 
-    if (
-      athleteDto.aadhaarNumber &&
-      athleteDto.aadhaarNumber !== existingAthlete.aadhaarNumber
-    ) {
-      existingAthlete.chestNumber = athleteDto.aadhaarNumber.slice(-5);
+    if (athleteDto.phone.length === 10) {
+      athleteDto.phone = `+91${athleteDto.phone}`;
     }
-
     // Check for DOB or gender changes
     if (
       (athleteDto.dob && athleteDto.dob !== existingAthlete.dob) ||
@@ -990,8 +986,8 @@ export class AthleteService {
 
   private async generateUniqueChestNumber(): Promise<string> {
     while (true) {
-      // Generate a random 5-digit number
-      const chestNumber = Math.floor(10000 + Math.random() * 90000).toString();
+      // Generate a random 4-digit number
+      const chestNumber = Math.floor(1000 + Math.random() * 9000).toString();
       // Check if this chest number already exists
       const existingAthlete = await this.athleteRepository.findOne({
         where: { chestNumber },

@@ -46,7 +46,7 @@ export class PaymentService {
       });
 
       const total = athleteCount + managerCount + coachCount;
-      const paymentAmount = total * 500;
+      const paymentAmount = total * 500 * 5;
       return paymentAmount;
     } catch (error) {
       throw new InternalServerErrorException(
@@ -76,9 +76,11 @@ export class PaymentService {
       if (status === 'paid') {
         school.paymentStatus = PaymentStatus.Paid;
         school.isPaid = 'true';
+        school.accommodationRequired = 'true'
       } else if (status === 'approvalPending') {
         school.paymentStatus = PaymentStatus.ApprovalPending;
         school.isPaid = 'false';
+        school.accommodationRequired = 'false'
       } else {
         throw new BadRequestException('Invalid status');
       }

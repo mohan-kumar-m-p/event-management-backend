@@ -83,10 +83,21 @@ export class TaskService {
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, { timeZone: 'Asia/Kolkata' })
   async handleCron() {
+    // Get today's date in UTC
     const today = new Date();
-    const targetDate = new Date(today.getFullYear(), 8, 26); // September is month 8 (0-indexed)
 
-    if (today.toDateString() === targetDate.toDateString()) {
+    // Convert UTC to IST by adding 5.5 hours (19800 seconds)
+    const ISTOffset = 5.5 * 60 * 60 * 1000; // Offset in milliseconds
+    const todayIST = new Date(today.getTime() + ISTOffset);
+
+    // Hardcode the target date (September 26th, 2024)
+    const targetDate = new Date(2024, 8, 26); // September is month 8 (0-indexed)
+
+    if (
+      todayIST.getFullYear() === targetDate.getFullYear() &&
+      todayIST.getMonth() === targetDate.getMonth() &&
+      todayIST.getDate() === targetDate.getDate()
+    ) {
       this.logger.log(
         'Running GenerateQualifyingHeats for all track event rounds labeled "Heats"',
       );

@@ -238,6 +238,10 @@ export class ManagerService {
       throw new NotFoundException(`Manager with ID ${id} not found`);
     }
 
+    if (managerDto.phone.length === 10) {
+      managerDto.phone = `+91${managerDto.phone}`;
+    }
+
     // Update fields from the DTO
     existingManager.name = managerDto.name;
     existingManager.dob = managerDto.dob

@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Put,
   Request,
   UploadedFile,
   UseGuards,
@@ -12,11 +13,11 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { RolesGuard } from 'src/guards/role.guard';
 import { ApiResponse } from 'src/shared/dto/api-response.dto';
+import { OrganizerRole } from 'src/shared/roles';
 import { CulturalProgramDto } from './cultural-program.dto';
 import { CulturalProgramService } from './cultural-program.service';
-import { RolesGuard } from 'src/guards/role.guard';
-import { OrganizerRole } from 'src/shared/roles';
 
 @UseGuards(AuthGuard('jwt'))
 @Controller('cultural-program')
@@ -80,6 +81,32 @@ export class CulturalProgramController {
     return ApiResponse.success(
       `Cultural programs for school with affiliation number ${affiliationNumber} fetched successfully`,
       culturalPrograms,
+    );
+  }
+
+  @Put(':id/update-cultural-events')
+  @UseInterceptors(FileInterceptor('photo'))
+  async updateAthleteCulturalEvents(
+    @Param('id') id: string,
+    @Body() culturalProgramDto: CulturalProgramDto,
+    @UploadedFile() media: Express.Multer.File,
+    @Request() req,
+  ): Promise<ApiResponse<any>> {
+    const schoolAffiliationNumber = culturalProgramDto.affiliationNumber
+      ? culturalProgramDto.affiliationNumber
+      : req?.user?.sub;
+
+    const updatedCulturalProgram =
+      await this.culturalProgramService.updateCulturalProgram(
+        id,
+        culturalProgramDto,
+        schoolAffiliationNumber,
+        media,
+      );
+
+    return ApiResponse.success(
+      'Athlete events updated successfully',
+      updatedCulturalProgram,
     );
   }
 }

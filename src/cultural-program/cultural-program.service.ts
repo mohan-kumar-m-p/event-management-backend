@@ -6,10 +6,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Athlete } from 'src/athlete/athlete.entity';
-import { Repository } from 'typeorm';
-import { CulturalProgram } from './cultural-program.entity';
-import { CulturalProgramDto } from './cultural-program.dto';
 import { School } from 'src/school/school.entity';
+import { Repository } from 'typeorm';
+import { CulturalProgramDto } from './cultural-program.dto';
+import { CulturalProgram } from './cultural-program.entity';
 
 @Injectable()
 export class CulturalProgramService {
@@ -150,5 +150,81 @@ export class CulturalProgramService {
     });
 
     return result;
+  }
+
+  async updateCulturalProgram(
+    id: string,
+    culturalProgramDto: CulturalProgramDto,
+    affiliationNumber: string,
+    media?: Express.Multer.File,
+  ): Promise<any> {
+    const existingCulturalProgram =
+      await this.culturalProgramRepository.findOne({
+        where: { id },
+        relations: ['athlete', 'school'],
+      });
+
+    if (!existingCulturalProgram) {
+      throw new NotFoundException('Cultural program not found');
+    }
+
+    const school = await this.schoolRepository.findOne({
+      where: { affiliationNumber },
+    });
+
+    if (!school) {
+      throw new NotFoundException('School not found');
+    }
+
+    const athlete = await this.athleteRepository.findOne({
+      where: { registrationId: culturalProgramDto.athleteId },
+    });
+
+    if (!athlete) {
+      throw new NotFoundException('Athlete not found');
+    }
+
+    // Handle media file upload if provided
+    let s3Data = null;
+    if (media) {
+      s3Data = await this.s3Service.uploadFile(media, 'cultural-program');
+    }
+
+    // Iterate through the categories and update the cultural programs for each category
+    const updatedCulturalPrograms = await Promise.all(
+      culturalProgramDto.category.map(async (category) => {
+        const updatedCulturalProgram = {
+          ...existingCulturalProgram, // Start with the existing data
+          ...culturalProgramDto, // Override with new DTO data
+          category, // Specific category in the current loop iteration
+          athlete: athlete, // Updated athlete
+          school: school, // Updated school
+          mediaUrl:
+            s3Data?.fileKey ||
+            culturalProgramDto.mediaUrl ||
+            existingCulturalProgram.mediaUrl, // Keep existing media URL if not provided
+        };
+
+        // Save the updated cultural program
+        await this.culturalProgramRepository.save(updatedCulturalProgram);
+
+        // Return the updated program with specific athlete/school details
+        return {
+          ...updatedCulturalProgram,
+          athleteId: updatedCulturalProgram.athlete.registrationId,
+          athleteName: updatedCulturalProgram.athlete.name,
+          affiliationNumber: updatedCulturalProgram.school.affiliationNumber,
+          schoolName: updatedCulturalProgram.school.name,
+        };
+      }),
+    );
+
+    // Remove the athlete and school relations from the return objects
+    updatedCulturalPrograms.forEach((result) => {
+      delete result.athlete;
+      delete result.school;
+    });
+
+    return updatedCulturalPrograms;
   }
 }

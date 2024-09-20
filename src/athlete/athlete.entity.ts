@@ -46,7 +46,7 @@ export class Athlete extends BaseEntity {
   @Column({ nullable: true, unique: true, length: 12 })
   aadhaarNumber: string;
 
-  @Column({ nullable: true, length: 5 }) // last 5 digits of aadhaar
+  @Column({ nullable: true, length: 4 })
   chestNumber: string;
 
   @Column()

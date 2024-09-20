@@ -235,6 +235,9 @@ export class CoachService {
       throw new NotFoundException(`Coach with ID ${id} not found`);
     }
 
+    if (coachDto.phone.length === 10) {
+      coachDto.phone = `+91${coachDto.phone}`;
+    }
     // Update fields from the DTO
     existingCoach.name = coachDto.name;
     existingCoach.dob = coachDto.dob
