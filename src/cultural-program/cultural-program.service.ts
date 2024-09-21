@@ -127,7 +127,24 @@ export class CulturalProgramService {
       );
     }
 
-    return programs;
+    const bucketName = process.env.S3_BUCKET_NAME;
+    const promises = programs.map(async (program) => {
+      if (program.mediaUrl) {
+        const media = await this.s3Service.getFile(
+          bucketName,
+          program.mediaUrl,
+        );
+        const mediaBase64 = media.Body.toString('base64');
+        return {
+          ...program,
+          mediaFile: `data:${media.ContentType};base64,${mediaBase64}`,
+        };
+      }
+      return program;
+    });
+
+    const resolvedResults = await Promise.all(promises);
+    return resolvedResults;
   }
 
   async findAllBySchool(affiliationNumber: string): Promise<any[]> {
