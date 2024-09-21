@@ -12,7 +12,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         password: process.env.POSTGRES_PASSWORD,
         database: process.env.POSTGRES_DB,
         autoLoadEntities: true,
-        synchronize: true, // Set to false in production
+        synchronize: false, // Set to false in production
         // logging: true,
         ssl: {
           rejectUnauthorized: false,
